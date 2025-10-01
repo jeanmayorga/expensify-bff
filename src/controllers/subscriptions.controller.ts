@@ -116,12 +116,6 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
         continue;
       }
 
-      const transaction = await TransactionsService.getByMessageId(messageId);
-      if (transaction) {
-        console.log("🤖 transaction already exists ->", messageId);
-        continue;
-      }
-
       const messageService = new MessagesService(token);
       const message = await messageService.getMessageById(messageId);
       if (!message) {
@@ -144,6 +138,12 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
 
       if (!message.body) {
         console.log("🤖 message body not found ->", message);
+        continue;
+      }
+
+      const transaction = await TransactionsService.getByMessageId(messageId);
+      if (transaction) {
+        console.log("🤖 transaction already exists ->", messageId);
         continue;
       }
 
