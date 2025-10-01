@@ -8,6 +8,7 @@ import subscriptionsController from "./controllers/subscriptions.controller";
 import { RedisService } from "./services/redis.service";
 import meController from "./controllers/me.controller";
 import { startSubscriptionsCron } from "./crons/subscriptions.cron";
+import messagesController from "./controllers/messages.controller";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json({ limit: "2mb" }));
 
 app.use("/", meController);
 app.use("/outlook", outlookController);
+app.use("/messages", messagesController);
 app.use("/subscriptions", subscriptionsController);
 app.use("/transactions", transactionsController);
 

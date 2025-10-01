@@ -3,7 +3,6 @@ import { OutlookService } from "../services/outlook.service";
 import { handleError } from "@/utils/handle-error";
 import { SubscriptionsService } from "@/services/subscriptions.service";
 import { RedisService } from "@/services/redis.service";
-import { env } from "@/config/env";
 
 const router = Router();
 
