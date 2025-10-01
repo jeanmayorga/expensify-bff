@@ -3,6 +3,7 @@ import { OutlookService } from "../services/outlook.service";
 import { handleError } from "@/utils/handle-error";
 import { SubscriptionsService } from "@/services/subscriptions.service";
 import { RedisService } from "@/services/redis.service";
+import { env } from "@/config/env";
 
 const router = Router();
 
@@ -39,14 +40,17 @@ router.get("/redirect", async (req: Request, res: Response): Promise<void> => {
     const subscriptionService = new SubscriptionsService(accessTokenTmp);
     const subscriptions = await subscriptionService.getSubscriptions();
 
-    if (subscriptions.length === 0) {
-      await subscriptionService.createSubscription();
-      const subscriptions = await subscriptionService.getSubscriptions();
-      res.json({ subscriptions });
-      return;
+    const NOTIFICATION_URL = `${env.DOMAIN}/subscriptions/webhook`;
+    const subscription = subscriptions.find(
+      (subscription) => subscription.notificationUrl === NOTIFICATION_URL
+    );
+    const subscriptionId = subscription?.id;
+    if (!subscriptionId) {
+      console.log(`🔄 subscription not found for ${NOTIFICATION_URL}`);
     }
 
-    subscriptionService.startRenewSubscription();
+    await subscriptionService.renewSubscription(subscriptionId);
+
     res.json({ homeAccountId, accessTokenTmp, subscriptions });
   } catch (error) {
     handleError({

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { env } from "../config/env";
-import cron from "node-cron";
+import { constants } from "@/config/constants";
 import { getErrorMessage } from "@/utils/handle-error";
 import { Subscription } from "@/models/subscriptions.service";
 
@@ -31,9 +31,10 @@ export class SubscriptionsService {
     }
   }
 
-  async getSubscriptionById(id: string): Promise<Subscription | null> {
+  async getSubscriptionById(id?: string): Promise<Subscription | null> {
     try {
       console.log("SubscriptionsService->getSubscriptionById()", id);
+      if (!id) return null;
       const response = await this.subscriptionsApi.get(`/${id}`);
       return response.data;
     } catch (error: any) {
@@ -85,7 +86,9 @@ export class SubscriptionsService {
     try {
       console.log("SubscriptionsService->createSubscription()");
       const expirationDateTime = new Date();
-      expirationDateTime.setMinutes(expirationDateTime.getMinutes() + 30);
+      expirationDateTime.setMinutes(
+        expirationDateTime.getMinutes() + constants.SUBSCRIPTION_EXPIRATION_TIME
+      );
 
       const response = await this.subscriptionsApi.post("/", {
         changeType: "created",
@@ -94,6 +97,16 @@ export class SubscriptionsService {
         expirationDateTime: expirationDateTime.toISOString(),
         clientState: "miClaveSegura",
       });
+
+      const now = Date.now();
+      const exp = new Date(response.data.expirationDateTime).getTime();
+      const minsLeft = (exp - now) / 60000;
+      console.log("createSubscription ->", {
+        now: new Date(now).toISOString(),
+        expires: new Date(exp).toISOString(),
+        minsLeft,
+      });
+
       return response.data;
     } catch (error: any) {
       const message = getErrorMessage(error);
@@ -102,37 +115,33 @@ export class SubscriptionsService {
     }
   }
 
-  async renewSubscription(): Promise<void> {
+  async renewSubscription(id?: string): Promise<void> {
     try {
       console.log("SubscriptionsService->renewSubscription()");
-      const subscription = await this.getSubscription();
-      if (!subscription) return;
-      console.log("🔄 subscription ->", subscription?.id);
+      const subscription = await this.getSubscriptionById(id);
+      if (!subscription) {
+        console.log("🔄 subscription not found, creating new one");
+        await this.createSubscription();
+        return;
+      }
 
       const exp = new Date(subscription.expirationDateTime).getTime();
       const now = Date.now();
       const minsLeft = (exp - now) / 60000;
+      console.log("renewIfNeeded -> minsLeft:", minsLeft.toFixed(2));
 
-      console.log("🔄 subscription mins left ->", minsLeft);
-      // Renovar si quedan < 10 minutos para evitar expiración
-      if (minsLeft < 10) {
-        // Nueva expiración: +30 minutos a partir de ahora
-        const newExp = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-        await this.subscriptionsApi.patch(`/${subscription.id}`, {
+      if (minsLeft <= constants.SUBSCRIPTION_MINUTES_TO_RENEW) {
+        const newExp = new Date(
+          Date.now() + constants.SUBSCRIPTION_EXPIRATION_TIME * 60 * 1000
+        ).toISOString();
+        const response = await this.subscriptionsApi.patch(`/${id}`, {
           expirationDateTime: newExp,
         });
-        console.log("🔄 subscription renewed until:", newExp);
+        console.log("🔄 subscription renewed until:", newExp, response.data);
       }
     } catch (error: any) {
       const message = getErrorMessage(error);
       console.error("SubscriptionsService->renewSubscription()->", message);
     }
-  }
-
-  startRenewSubscription(): void {
-    cron.schedule("*/15 * * * *", () => {
-      this.renewSubscription();
-    });
-    console.log("🔄 subscription renewal cron started (every 15 minutes)");
   }
 }

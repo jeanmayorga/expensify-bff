@@ -7,6 +7,7 @@ import transactionsController from "./controllers/transactions.controller";
 import subscriptionsController from "./controllers/subscriptions.controller";
 import { RedisService } from "./services/redis.service";
 import meController from "./controllers/me.controller";
+import { startSubscriptionsCron } from "./crons/subscriptions.cron";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ app.use("*", (req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`🚀 Expensify BFF running on port ${PORT}`);
   new RedisService();
-  // OutlookService.startRenewSubscription();
+  startSubscriptionsCron();
 });
 
 export default app;
