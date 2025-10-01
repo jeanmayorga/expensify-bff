@@ -23,36 +23,25 @@ export class SubscriptionsService {
     try {
       console.log("SubscriptionsService->getSubscriptions()");
       const response = await this.subscriptionsApi.get("/");
-      return response.data.value;
+      const mappedSubscriptions = response.data.value.map(
+        (subscription: Subscription) => {
+          const expirationDateTimeEcuador = new Date(
+            subscription.expirationDateTime
+          ).toLocaleString("es-EC", {
+            timeZone: "America/Guayaquil",
+          });
+
+          return {
+            ...subscription,
+            expirationDateTimeEcuador,
+          };
+        }
+      );
+      return mappedSubscriptions;
     } catch (error: any) {
       const message = getErrorMessage(error);
       console.error("SubscriptionsService->getSubscriptions()->", message);
       return [];
-    }
-  }
-
-  async getSubscriptionById(id?: string): Promise<Subscription | null> {
-    try {
-      console.log("SubscriptionsService->getSubscriptionById()", id);
-      if (!id) return null;
-      const response = await this.subscriptionsApi.get(`/${id}`);
-      return response.data;
-    } catch (error: any) {
-      const message = getErrorMessage(error);
-      console.error("SubscriptionsService->getSubscriptionById()->", message);
-      return null;
-    }
-  }
-
-  async getSubscription(): Promise<Subscription | null> {
-    try {
-      console.log("SubscriptionsService->getSubscription()");
-      const subscriptions = await this.getSubscriptions();
-      return subscriptions[0] || null;
-    } catch (error: any) {
-      const message = getErrorMessage(error);
-      console.error("SubscriptionsService->getSubscription()->", message);
-      return null;
     }
   }
 
