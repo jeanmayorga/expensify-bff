@@ -6,26 +6,11 @@ import { RedisService } from "@/services/redis.service";
 
 const router = Router();
 
-router.get("/me", async (req: Request, res: Response): Promise<void> => {
-  console.log("controller->/GET outlook/me");
-  const redisService = new RedisService();
-  const token = await redisService.get("accessToken");
-  if (!token) throw new Error("No token available.");
-
-  const data = await OutlookService.getGraphMe(token);
-  res.json({ data });
-});
-
-router.get("/", async (req: Request, res: Response): Promise<void> => {
-  console.log("controller->/GET outlook/");
-  // const status = OutlookService.getStatus();
-  // res.json({ status });
-});
-
 router.get("/login", async (req: Request, res: Response): Promise<void> => {
   try {
     console.log("controller->/GET outlook/login");
-    const url = await OutlookService.getAuthUrl();
+    const outlookService = new OutlookService();
+    const url = await outlookService.getAuthUrl();
     res.redirect(url);
   } catch (error) {
     handleError({
@@ -41,12 +26,17 @@ router.get("/redirect", async (req: Request, res: Response): Promise<void> => {
   try {
     console.log("controller->/GET outlook/redirect");
     const code = req.query.code as string;
-    const accessToken = await OutlookService.getTokenByCode(code);
+    const outlookService = new OutlookService();
+    const acquire = await outlookService.getAcquireTokenByCode(code);
+
+    const accessTokenTmp = acquire.accessToken;
+    const homeAccountId = acquire.homeAccountId;
+    if (!homeAccountId) throw new Error("No home account ID found.");
 
     const redisService = new RedisService();
-    await redisService.set("accessToken", accessToken);
+    await redisService.set("homeAccountId", homeAccountId);
 
-    const subscriptionService = new SubscriptionsService(accessToken);
+    const subscriptionService = new SubscriptionsService(accessTokenTmp);
     const subscriptions = await subscriptionService.getSubscriptions();
 
     if (subscriptions.length === 0) {
@@ -57,7 +47,7 @@ router.get("/redirect", async (req: Request, res: Response): Promise<void> => {
     }
 
     subscriptionService.startRenewSubscription();
-    res.json({ subscriptions, accessToken });
+    res.json({ homeAccountId, accessTokenTmp, subscriptions });
   } catch (error) {
     handleError({
       error,

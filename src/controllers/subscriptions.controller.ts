@@ -5,69 +5,81 @@ import { handleError } from "@/utils/handle-error";
 import { SubscriptionsService } from "@/services/subscriptions.service";
 import { RedisService } from "@/services/redis.service";
 import { MessagesService } from "@/services/messages.service";
+import {
+  outlookMiddleware,
+  OutlookRequest,
+} from "@/middlewares/outlook.middleware";
+import { OutlookService } from "@/services/outlook.service";
 
 const router = Router();
 
-router.post("/", async (req: Request, res: Response): Promise<void> => {
-  try {
-    console.log("controller->/POST subscriptions");
-    const redisService = new RedisService();
-    const token = await redisService.get("accessToken");
-    if (!token) throw new Error("No token available.");
+router.post(
+  "/",
+  outlookMiddleware,
+  async (req: OutlookRequest, res: Response): Promise<void> => {
+    try {
+      console.log("controller->/POST subscriptions");
+      const token = req.accessToken || "";
 
-    const subscriptionService = new SubscriptionsService(token);
-    const subscription = await subscriptionService.createSubscription();
+      const subscriptionService = new SubscriptionsService(token);
+      const subscription = await subscriptionService.createSubscription();
 
-    res.json({ subscription });
-  } catch (error: any) {
-    handleError({
-      error,
-      res,
-      controller: "subscriptions",
-      message: "Failed to create subscription",
-    });
+      res.json({ subscription });
+    } catch (error: any) {
+      handleError({
+        error,
+        res,
+        controller: "subscriptions",
+        message: "Failed to create subscription",
+      });
+    }
   }
-});
+);
 
-router.get("/", async (req: Request, res: Response): Promise<void> => {
-  try {
-    console.log("controller->/GET subscriptions");
-    const redisService = new RedisService();
-    const token = await redisService.get("accessToken");
-    if (!token) throw new Error("No token available.");
+router.get(
+  "/",
+  outlookMiddleware,
+  async (req: OutlookRequest, res: Response): Promise<void> => {
+    try {
+      console.log("controller->/GET subscriptions");
+      const token = req.accessToken || "";
 
-    const subscriptionService = new SubscriptionsService(token);
-    const subscriptions = await subscriptionService.getSubscriptions();
-    res.json({ subscriptions });
-  } catch (error: any) {
-    handleError({
-      error,
-      res,
-      controller: "subscriptions",
-      message: "Failed to get subscriptions",
-    });
+      const subscriptionService = new SubscriptionsService(token);
+      const subscriptions = await subscriptionService.getSubscriptions();
+      res.json({ subscriptions });
+    } catch (error: any) {
+      handleError({
+        error,
+        res,
+        controller: "subscriptions",
+        message: "Failed to get subscriptions",
+      });
+    }
   }
-});
+);
 
-router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
-  try {
-    console.log("controller->/DELETE subscriptions");
-    const redisService = new RedisService();
-    const token = await redisService.get("accessToken");
-    if (!token) throw new Error("No token available.");
+router.delete(
+  "/:id",
+  outlookMiddleware,
+  async (req: OutlookRequest, res: Response): Promise<void> => {
+    try {
+      console.log("controller->/DELETE subscriptions");
+      const token = req.accessToken || "";
+      if (!token) throw new Error("No token available.");
 
-    const subscriptionService = new SubscriptionsService(token);
-    await subscriptionService.deleteSubscription(req.params.id as string);
-    res.sendStatus(200);
-  } catch (error: any) {
-    handleError({
-      error,
-      res,
-      controller: "subscriptions",
-      message: "Failed to delete subscription",
-    });
+      const subscriptionService = new SubscriptionsService(token);
+      await subscriptionService.deleteSubscription(req.params.id as string);
+      res.sendStatus(200);
+    } catch (error: any) {
+      handleError({
+        error,
+        res,
+        controller: "subscriptions",
+        message: "Failed to delete subscription",
+      });
+    }
   }
-});
+);
 
 router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
   console.log("controller->/POST outlook/webhook");
@@ -87,7 +99,11 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
     const emails = payload.value || [];
 
     const redisService = new RedisService();
-    const token = await redisService.get("accessToken");
+    const homeAccountId = await redisService.get("homeAccountId");
+    if (!homeAccountId) throw new Error("No account available.");
+
+    const outlookService = new OutlookService();
+    const token = await outlookService.getAccessToken(homeAccountId);
     if (!token) throw new Error("No token available.");
 
     console.log("controller->/POST outlook/webhook->emails", emails.length);

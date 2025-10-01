@@ -6,6 +6,7 @@ import outlookController from "./controllers/outlook.controller";
 import transactionsController from "./controllers/transactions.controller";
 import subscriptionsController from "./controllers/subscriptions.controller";
 import { RedisService } from "./services/redis.service";
+import meController from "./controllers/me.controller";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
+app.use("/", meController);
 app.use("/outlook", outlookController);
 app.use("/subscriptions", subscriptionsController);
 app.use("/transactions", transactionsController);

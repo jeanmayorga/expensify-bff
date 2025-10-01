@@ -59,11 +59,13 @@ export class RedisService {
   }
 
   async set(key: string, value: string) {
+    console.log("RedisService->set()", key);
     await this.ensureConnected();
     return await this.redis.set(key, value);
   }
 
   async get(key: string) {
+    console.log("RedisService->get()", key);
     await this.ensureConnected();
     return await this.redis.get(key);
   }
