@@ -20,7 +20,12 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       page,
       limit,
     });
-    res.json({ data: transactions });
+
+    const totalAmount = transactions.reduce(
+      (acc, transaction) => acc + (transaction.amount || 0),
+      0
+    );
+    res.json({ total: transactions.length, totalAmount, data: transactions });
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions->error", message);
