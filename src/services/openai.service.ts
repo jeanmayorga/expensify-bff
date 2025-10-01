@@ -91,7 +91,9 @@ export class OpenAIService {
 
   async getTransactionFromEmail(message: string) {
     try {
-      console.log("OpenAIService->getTransactionFromEmail()");
+      console.log(
+        `OpenAIService->getTransactionFromEmail() ${message.length} chars`
+      );
       const response = await this.createStructuredResponse(message);
       const outputText = (response as any).output_text as string;
       const parsed = JSON.parse(outputText);

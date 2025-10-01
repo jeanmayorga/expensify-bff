@@ -16,7 +16,7 @@ export class MessagesService {
 
   async getMessageById(messageId: string): Promise<Message | null> {
     try {
-      console.log("MessagesService->getMessageById()");
+      console.log("MessagesService->getMessageById()->", messageId);
       const response = await this.messagesApi.get(
         `/${messageId}?$select=from,receivedDateTime,body`
       );
@@ -32,8 +32,8 @@ export class MessagesService {
       return formattedMessage;
     } catch (error) {
       const message = getErrorMessage(error);
-      console.error("MessagesService->getMessageById()->", message);
-      return null;
+      console.error("MessagesService->getMessageById()->error", message);
+      throw error;
     }
   }
 }

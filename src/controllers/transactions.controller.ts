@@ -2,13 +2,24 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
+import { getEcuadorDate } from "@/utils/ecuador-time";
+import { format } from "date-fns-tz";
 
 const router = Router();
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     console.log("controller->/GET transactions");
-    const transactions = await TransactionsService.getAll();
+    const date =
+      (req.query.date as string) || format(getEcuadorDate(), "yyyy-MM-dd");
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 100;
+
+    const transactions = await TransactionsService.getAll({
+      date,
+      page,
+      limit,
+    });
     res.json({ data: transactions });
   } catch (error) {
     const message = getErrorMessage(error);

@@ -2,7 +2,9 @@ import axios, { AxiosInstance } from "axios";
 import { env } from "../config/env";
 import { constants } from "@/config/constants";
 import { getErrorMessage } from "@/utils/handle-error";
-import { Subscription } from "@/models/subscriptions.service";
+import { Subscription } from "@/models/subscriptions.model";
+import { getEcuadorDate } from "@/utils/ecuador-time";
+import { format } from "date-fns-tz";
 
 const DOMAIN = env.DOMAIN;
 const NOTIFICATION_URL = `${DOMAIN}/subscriptions/webhook`;
@@ -25,12 +27,11 @@ export class SubscriptionsService {
       const response = await this.subscriptionsApi.get("/");
       const mappedSubscriptions = response.data.value.map(
         (subscription: Subscription) => {
-          const expirationDateTimeEcuador = new Date(
-            subscription.expirationDateTime
-          ).toLocaleString("es-EC", {
-            timeZone: "America/Guayaquil",
-          });
-
+          const expirationDateTime = new Date(subscription.expirationDateTime);
+          const expirationDateTimeEcuador = format(
+            getEcuadorDate(expirationDateTime),
+            "yyyy-MM-dd HH:mm:ss"
+          );
           return {
             ...subscription,
             expirationDateTimeEcuador,
@@ -123,12 +124,26 @@ export class SubscriptionsService {
       }
       const subscriptionId = subscription.id;
 
+      console.log(
+        "subscription found! -> expirationDateTime:",
+        format(
+          getEcuadorDate(new Date(subscription.expirationDateTime)),
+          "yyyy-MM-dd HH:mm:ss"
+        )
+      );
       const exp = new Date(subscription.expirationDateTime).getTime();
       const now = Date.now();
       const minsLeft = (exp - now) / 60000;
       const hoursLeft = Math.floor(minsLeft / 60);
-      console.log("renewIfNeeded -> minsLeft:", minsLeft.toFixed(0));
-      console.log("renewIfNeeded -> hoursLeft:", hoursLeft.toFixed(0));
+
+      console.log("renewSubscription ->", {
+        now: new Date(now).toISOString(),
+        expires: new Date(exp).toISOString(),
+        minsLeft: minsLeft.toFixed(0) + " mins left",
+        hoursLeft: hoursLeft.toFixed(0) + " hours left",
+        minutesToRenewConstant: constants.SUBSCRIPTION_MINUTES_TO_RENEW,
+        needsRenew: minsLeft <= constants.SUBSCRIPTION_MINUTES_TO_RENEW,
+      });
 
       if (minsLeft <= constants.SUBSCRIPTION_MINUTES_TO_RENEW) {
         const newExp = new Date(

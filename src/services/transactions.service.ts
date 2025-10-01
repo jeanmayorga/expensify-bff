@@ -1,11 +1,30 @@
 import { supabase } from "./supabase.service";
-import { Transaction, TransactionInsert } from "../models/transactions.model";
+import {
+  GetAllTransactionsOptions,
+  Transaction,
+  TransactionInsert,
+} from "../models/transactions.model";
+import { ecDayBounds } from "@/utils/ecuador-time";
 export class TransactionsService {
-  static async getAll(): Promise<Transaction[]> {
-    console.log("TransactionsService->getAll()");
+  static async getAll(
+    options: GetAllTransactionsOptions
+  ): Promise<Transaction[]> {
+    const { startEcDay, endEcDay } = ecDayBounds(options.date);
+
+    console.log("TransactionsService->getAll()", {
+      ...options,
+      startEcDay,
+      endEcDay,
+    });
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
+      .gte("occurred_at", startEcDay)
+      .lte("occurred_at", endEcDay)
+      .range(
+        (options.page - 1) * options.limit,
+        options.page * options.limit - 1
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -41,15 +60,19 @@ export class TransactionsService {
       .single();
 
     if (error) {
+      if (error.code === "PGRST116") {
+        console.log("TransactionsService->getByMessageId()->notfound");
+        return null;
+      }
       console.error(`TransactionsService->getByMessageId()->error`, error);
-      return null;
+      throw error;
     }
 
     return data;
   }
 
   static async create(dto: TransactionInsert): Promise<Transaction | null> {
-    console.log("TransactionsService->create()");
+    console.log("TransactionsService->create()->", dto.income_message_id);
     const { data, error } = await supabase
       .from("transactions")
       .insert(dto)
@@ -58,7 +81,7 @@ export class TransactionsService {
 
     if (error) {
       console.error("TransactionsService->create()->error", error.message);
-      return null;
+      throw error;
     }
 
     return data;
