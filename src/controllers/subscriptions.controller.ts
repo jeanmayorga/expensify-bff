@@ -102,7 +102,7 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
       const message = await OutlookService.getMessageById(messageId);
 
       const whitelist = [
-        "pauldhmayorga@gmail.com",
+        "pauldhmayorgaw@gmail.com",
         "bancaenlinea@produbanco.com",
         "xperta@pichincha.com",
         "notificaciones@infopacificard.com.ec",
