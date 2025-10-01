@@ -101,10 +101,12 @@ export class SubscriptionsService {
       const now = Date.now();
       const exp = new Date(response.data.expirationDateTime).getTime();
       const minsLeft = (exp - now) / 60000;
+      const hoursLeft = Math.floor(minsLeft / 60);
       console.log("createSubscription ->", {
         now: new Date(now).toISOString(),
         expires: new Date(exp).toISOString(),
-        minsLeft,
+        minsLeft: minsLeft.toFixed(0) + " mins left",
+        hoursLeft: hoursLeft + " hours left",
       });
 
       return response.data;
@@ -115,28 +117,40 @@ export class SubscriptionsService {
     }
   }
 
-  async renewSubscription(id?: string): Promise<void> {
+  async renewSubscription(): Promise<void> {
     try {
       console.log("SubscriptionsService->renewSubscription()");
-      const subscription = await this.getSubscriptionById(id);
+      const subscriptions = await this.getSubscriptions();
+      const NOTIFICATION_URL = `${env.DOMAIN}/subscriptions/webhook`;
+      const subscription = subscriptions.find(
+        (subscription) => subscription.notificationUrl === NOTIFICATION_URL
+      );
       if (!subscription) {
-        console.log("🔄 subscription not found, creating new one");
+        console.log(
+          `🔄 subscription not found for ${NOTIFICATION_URL}, creating new one`
+        );
         await this.createSubscription();
         return;
       }
+      const subscriptionId = subscription.id;
 
       const exp = new Date(subscription.expirationDateTime).getTime();
       const now = Date.now();
       const minsLeft = (exp - now) / 60000;
-      console.log("renewIfNeeded -> minsLeft:", minsLeft.toFixed(2));
+      const hoursLeft = Math.floor(minsLeft / 60);
+      console.log("renewIfNeeded -> minsLeft:", minsLeft.toFixed(0));
+      console.log("renewIfNeeded -> hoursLeft:", hoursLeft.toFixed(0));
 
       if (minsLeft <= constants.SUBSCRIPTION_MINUTES_TO_RENEW) {
         const newExp = new Date(
           Date.now() + constants.SUBSCRIPTION_EXPIRATION_TIME * 60 * 1000
         ).toISOString();
-        const response = await this.subscriptionsApi.patch(`/${id}`, {
-          expirationDateTime: newExp,
-        });
+        const response = await this.subscriptionsApi.patch(
+          `/${subscriptionId}`,
+          {
+            expirationDateTime: newExp,
+          }
+        );
         console.log("🔄 subscription renewed until:", newExp, response.data);
       }
     } catch (error: any) {

@@ -23,19 +23,7 @@ class SubscriptionsCron {
       if (!accessToken) throw new Error("No access token available.");
 
       const subscriptionsService = new SubscriptionsService(accessToken);
-      const subscriptions = await subscriptionsService.getSubscriptions();
-
-      const NOTIFICATION_URL = `${env.DOMAIN}/subscriptions/webhook`;
-
-      const subscription = subscriptions.find(
-        (subscription) => subscription.notificationUrl === NOTIFICATION_URL
-      );
-      const subscriptionId = subscription?.id;
-      if (!subscriptionId) {
-        console.log(`🔄 subscription not found for ${NOTIFICATION_URL}`);
-      }
-
-      await subscriptionsService.renewSubscription(subscriptionId);
+      await subscriptionsService.renewSubscription();
     } catch (error) {
       const message = getErrorMessage(error);
       console.error("SubscriptionsCron->renewSubscription()->", message);

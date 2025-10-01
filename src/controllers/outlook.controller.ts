@@ -38,20 +38,9 @@ router.get("/redirect", async (req: Request, res: Response): Promise<void> => {
     await redisService.set("homeAccountId", homeAccountId);
 
     const subscriptionService = new SubscriptionsService(accessTokenTmp);
-    const subscriptions = await subscriptionService.getSubscriptions();
+    await subscriptionService.renewSubscription();
 
-    const NOTIFICATION_URL = `${env.DOMAIN}/subscriptions/webhook`;
-    const subscription = subscriptions.find(
-      (subscription) => subscription.notificationUrl === NOTIFICATION_URL
-    );
-    const subscriptionId = subscription?.id;
-    if (!subscriptionId) {
-      console.log(`🔄 subscription not found for ${NOTIFICATION_URL}`);
-    }
-
-    await subscriptionService.renewSubscription(subscriptionId);
-
-    res.json({ homeAccountId, accessTokenTmp, subscriptions });
+    res.json({ homeAccountId, accessTokenTmp });
   } catch (error) {
     handleError({
       error,
