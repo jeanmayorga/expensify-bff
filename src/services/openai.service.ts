@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { env } from "../config/env";
 import { z } from "zod";
+import { getErrorMessage } from "@/utils/handle-error";
 // Using explicit JSON Schema to avoid helper compatibility issues
 
 const TransactionSchema = z.object({
@@ -51,14 +52,17 @@ const TransactionJsonSchema = {
   required: ["type", "description", "amount", "occurred_at", "bank"],
   additionalProperties: false,
 } as const;
-
-const openai = new OpenAI({
-  apiKey: env.OPENAI_API_KEY,
-});
-
 export class OpenAIService {
-  private static createStructuredResponse(message: string) {
-    return openai.responses.create({
+  private openai: OpenAI;
+
+  constructor() {
+    this.openai = new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+    });
+  }
+
+  private createStructuredResponse(message: string) {
+    return this.openai.responses.create({
       model: "gpt-5-nano",
       input: [
         {
@@ -68,7 +72,9 @@ export class OpenAIService {
             "Extract the transaction type (income/expense), description, amount, date/time, and optionally card/bank info. " +
             "For dates, use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ). " +
             "For amounts, use positive numbers only. " +
-            "Be precise and only extract information that is clearly present in the email.",
+            "Be precise and only extract information that is clearly present in the email." +
+            "Banco del Pacífico is the *bank name* of the following names: PacifiCard, Pacifico, infopacificard" +
+            "Banco Pichincha is the *bank name* of the following names: Pichincha",
         },
         { role: "user", content: message },
       ],
@@ -83,15 +89,16 @@ export class OpenAIService {
     });
   }
 
-  static async getTransactionFromEmail(message: string) {
+  async getTransactionFromEmail(message: string) {
     try {
+      console.log("OpenAIService->getTransactionFromEmail()");
       const response = await this.createStructuredResponse(message);
-      // The Responses API returns structured output in output_text conforming to the schema
       const outputText = (response as any).output_text as string;
       const parsed = JSON.parse(outputText);
       return TransactionSchema.parse(parsed);
     } catch (error) {
-      console.error("Error processing transaction from email:", error);
+      const message = getErrorMessage(error);
+      console.error("OpenAIService->getTransactionFromEmail()->error", message);
       return null;
     }
   }

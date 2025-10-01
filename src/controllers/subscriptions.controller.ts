@@ -1,19 +1,23 @@
 import { Request, Response, Router } from "express";
-import { OutlookService } from "../services/outlook.service";
 import { OpenAIService } from "@/services/openai.service";
 import { TransactionsService } from "@/services/transactions.service";
 import { handleError } from "@/utils/handle-error";
 import { SubscriptionsService } from "@/services/subscriptions.service";
+import { RedisService } from "@/services/redis.service";
+import { MessagesService } from "@/services/messages.service";
 
 const router = Router();
 
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = OutlookService.getToken();
+    console.log("controller->/POST subscriptions");
+    const redisService = new RedisService();
+    const token = await redisService.get("accessToken");
     if (!token) throw new Error("No token available.");
 
     const subscriptionService = new SubscriptionsService(token);
     const subscription = await subscriptionService.createSubscription();
+
     res.json({ subscription });
   } catch (error: any) {
     handleError({
@@ -27,7 +31,9 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = OutlookService.getToken();
+    console.log("controller->/GET subscriptions");
+    const redisService = new RedisService();
+    const token = await redisService.get("accessToken");
     if (!token) throw new Error("No token available.");
 
     const subscriptionService = new SubscriptionsService(token);
@@ -45,7 +51,9 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
 router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = OutlookService.getToken();
+    console.log("controller->/DELETE subscriptions");
+    const redisService = new RedisService();
+    const token = await redisService.get("accessToken");
     if (!token) throw new Error("No token available.");
 
     const subscriptionService = new SubscriptionsService(token);
@@ -62,12 +70,12 @@ router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
 });
 
 router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
-  console.log("controller -> outlook/webhook -> /POST");
+  console.log("controller->/POST outlook/webhook");
 
   const validationToken = req.query?.validationToken as string;
   if (validationToken) {
     console.log(
-      "controller -> outlook/webhook -> /POST validationToken ->",
+      "controller->/POST outlook/webhook->validationToken",
       validationToken
     );
     res.status(200).type("text/plain").send(validationToken);
@@ -78,28 +86,32 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
     const payload = req.body || {};
     const emails = payload.value || [];
 
-    console.log(
-      "controller -> outlook/webhook -> /POST emails -> ",
-      emails.length
-    );
+    const redisService = new RedisService();
+    const token = await redisService.get("accessToken");
+    if (!token) throw new Error("No token available.");
+
+    console.log("controller->/POST outlook/webhook->emails", emails.length);
     for (const notification of emails) {
-      // Get the messageId
       const messageId =
         notification?.resourceData?.id ||
         notification?.resource?.split("/").pop();
+      if (!messageId) {
+        console.log("🤖 messageId not found ->", notification);
+        continue;
+      }
 
-      // If the messageId is not found, continue
-      if (!messageId) continue;
-
-      // Check if the transaction already exists
       const transaction = await TransactionsService.getByMessageId(messageId);
       if (transaction) {
         console.log("🤖 transaction already exists ->", messageId);
         continue;
       }
 
-      console.log(`📧 email received messageId: ${messageId}`);
-      const message = await OutlookService.getMessageById(messageId);
+      const messageService = new MessagesService(token);
+      const message = await messageService.getMessageById(messageId);
+      if (!message) {
+        console.log("🤖 message not found ->", messageId);
+        continue;
+      }
 
       const whitelist = [
         "pauldhmayorgaw@gmail.com",
@@ -109,32 +121,34 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
         "bancavirtual@bancoguayaquil.com",
         "banco@pichincha.com",
       ];
-      const sender = message?.from?.emailAddress?.address?.toLowerCase();
-      if (!whitelist.includes(sender)) {
-        console.log("🤖 email not in whitelist ->", sender);
+      if (!whitelist.includes(message.from)) {
+        console.log("🤖 email not in whitelist ->", message.from);
         continue;
       }
 
-      const receivedAt = message?.receivedDateTime || "";
-      const bodyContent = message?.body?.content || message?.bodyPreview || "";
-
-      console.log(`📧 email received from: ${sender}, time: ${receivedAt}`);
-      const transactionGenerated = await OpenAIService.getTransactionFromEmail(
-        bodyContent
-      );
-      console.log("🤖 transactionGenerated ->", transactionGenerated?.amount);
-
-      if (transactionGenerated) {
-        const newTransaction = await TransactionsService.create({
-          type: transactionGenerated?.type,
-          description: `${transactionGenerated.bank} - ${transactionGenerated?.description}`,
-          amount: transactionGenerated?.amount,
-          occurred_at: transactionGenerated?.occurred_at,
-          income_message_id: messageId,
-          bank: transactionGenerated?.bank || null,
-        });
-        console.log("🤖 newTransaction saved ->", newTransaction?.id);
+      if (!message.body) {
+        console.log("🤖 message body not found ->", message);
+        continue;
       }
+
+      const openaiService = new OpenAIService();
+      const transactionGenerated = await openaiService.getTransactionFromEmail(
+        message.body
+      );
+      if (!transactionGenerated) {
+        console.log("🤖 transactionGenerated not found ->", messageId);
+        continue;
+      }
+
+      const newTransaction = await TransactionsService.create({
+        type: transactionGenerated.type,
+        description: transactionGenerated.description,
+        amount: transactionGenerated.amount,
+        occurred_at: transactionGenerated.occurred_at,
+        income_message_id: messageId,
+        bank: transactionGenerated.bank || null,
+      });
+      console.log("🤖 newTransaction saved ->", newTransaction?.id);
     }
 
     res.sendStatus(202);

@@ -1,5 +1,14 @@
 import { Response } from "express";
 
+export function getErrorMessage(error: any) {
+  return (
+    error.response?.data?.error?.message ||
+    error.response?.data?.error ||
+    error.message ||
+    "Unknown error"
+  );
+}
+
 export function handleError(options: {
   error: any;
   res: Response;
@@ -9,8 +18,7 @@ export function handleError(options: {
 }) {
   const error = options.error;
   const status = options.status || error.response?.status || 500;
-  const errorMessage =
-    error.response?.data?.error?.message || error.message || "Unknown error";
+  const errorMessage = getErrorMessage(error);
   const message = options.message || errorMessage;
   const res = options.res;
   const controller = options.controller;

@@ -10,4 +10,5 @@ export const env = {
   MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID || "",
   MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET || "",
   MICROSOFT_TENANT_ID: process.env.MICROSOFT_TENANT_ID || "",
+  REDIS_URL: process.env.REDIS_URL || "",
 };

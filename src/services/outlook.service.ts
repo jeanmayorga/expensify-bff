@@ -1,6 +1,6 @@
-import { ConfidentialClientApplication, AccountInfo } from "@azure/msal-node";
-import axios from "axios";
+import { ConfidentialClientApplication } from "@azure/msal-node";
 import { env } from "../config/env";
+import axios from "axios";
 
 const DOMAIN = env.DOMAIN;
 const REDIRECT_URL = `${DOMAIN}/outlook/redirect`;
@@ -16,21 +16,8 @@ export class OutlookService {
     system: { loggerOptions: { loggerCallback: () => {} } },
   });
 
-  private static cachedAccount: AccountInfo | null = null;
-  private static cachedToken: string | null = null;
-
-  static getToken() {
-    return this.cachedToken;
-  }
-
-  static getStatus() {
-    return {
-      loggedIn: Boolean(this.cachedAccount),
-      account: this.cachedAccount,
-    };
-  }
-
   static async getAuthUrl(): Promise<string> {
+    console.log("OutlookService->getAuthUrl()");
     const url = await this.outlook.getAuthCodeUrl({
       scopes: SCOPES,
       redirectUri: REDIRECT_URL,
@@ -39,46 +26,21 @@ export class OutlookService {
   }
 
   static async getTokenByCode(code: string): Promise<string> {
+    console.log("OutlookService->getTokenByCode()");
     const response = await this.outlook.acquireTokenByCode({
       code,
       scopes: SCOPES,
       redirectUri: REDIRECT_URL,
     });
-    this.cachedToken = response.accessToken;
-    this.cachedAccount = response.account;
-
     return response.accessToken;
   }
 
-  private static async acquireToken(): Promise<string> {
-    if (!this.cachedAccount) {
-      throw new Error("No account cached. Login first.");
-    }
-    const response = await this.outlook.acquireTokenSilent({
-      account: this.cachedAccount,
-      scopes: SCOPES,
+  static async getGraphMe(
+    accessToken: string
+  ): Promise<Record<string, unknown>> {
+    const response = await axios.get("https://graph.microsoft.com/v1.0/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
-    this.cachedAccount = response.account;
-    this.cachedToken = response.accessToken;
-
-    return response.accessToken;
-  }
-
-  static async getMessageById(messageId: string): Promise<any> {
-    const accessToken = await this.acquireToken();
-    if (!accessToken) {
-      throw new Error("No access token available. Login first.");
-    }
-
-    const response = await axios.get(
-      `https://graph.microsoft.com/v1.0/me/messages/${messageId}?$select=subject,from,receivedDateTime,bodyPreview,body`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
     return response.data;
   }
 }
