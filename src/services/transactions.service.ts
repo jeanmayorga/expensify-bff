@@ -4,28 +4,24 @@ import {
   Transaction,
   TransactionInsert,
 } from "../models/transactions.model";
-import { ecDayBounds } from "@/utils/ecuador-time";
 export class TransactionsService {
-  static async getAll(
+  static async getAllByDay(
     options: GetAllTransactionsOptions
   ): Promise<Transaction[]> {
-    const { startEcDay, endEcDay } = ecDayBounds(options.date);
+    const startDay = `${options.date}T00:00:00.000`;
+    const endDay = `${options.date}T23:59:59.999`;
 
     console.log("TransactionsService->getAll()", {
       ...options,
-      startEcDay,
-      endEcDay,
+      startDay,
+      endDay,
     });
 
     const query = supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_at", startEcDay)
-      .lte("occurred_at", endEcDay)
-      .range(
-        (options.page - 1) * options.limit,
-        options.page * options.limit - 1
-      )
+      .gte("occurred_at", startDay)
+      .lte("occurred_at", endDay)
       .order("occurred_at", { ascending: false });
 
     if (options.type) {
@@ -44,7 +40,7 @@ export class TransactionsService {
 
     if (error) {
       console.error("TransactionsService->getAll()->error", error.message);
-      return [];
+      throw error;
     }
 
     return data || [];

@@ -1,23 +1,8 @@
 import OpenAI from "openai";
 import { env } from "../config/env";
-import { z } from "zod";
 import { getErrorMessage } from "@/utils/handle-error";
-// Using explicit JSON Schema to avoid helper compatibility issues
+import { Transaction } from "@/models/transactions.model";
 
-const TransactionSchema = z.object({
-  type: z.enum(["income", "expense", "refund"]),
-  description: z.string().min(1, "Description cannot be empty"),
-  amount: z.number().min(0, "Amount must be positive"),
-  occurred_at: z
-    .string()
-    .regex(
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/,
-      "Date must be in ISO 8601 format"
-    ),
-  bank: z.string().nullable().optional(),
-});
-
-// JSON Schema for Structured Outputs (all fields required; nullable for optional semantics)
 const TransactionJsonSchema = {
   type: "object",
   properties: {
@@ -41,12 +26,19 @@ const TransactionJsonSchema = {
     occurred_at: {
       type: "string",
       description:
-        "The date and time when the transaction occurred in ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ)",
-      pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z?$",
+        "The date and time when the transaction occurred, the date is already in ecuador time, please do not convert it to UTC example: 2025-09-30T16:00:00",
+      pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$",
     },
     bank: {
       type: ["string", "null"],
-      description: "The name of the bank or financial institution (nullable)",
+      description:
+        "The name of the bank or financial institution: follow the bank instructions",
+      enum: [
+        "Banco del Pacifico",
+        "Banco Pichincha",
+        "Banco de Guayaquil",
+        "Produbanco",
+      ],
     },
   },
   required: ["type", "description", "amount", "occurred_at", "bank"],
@@ -73,8 +65,11 @@ export class OpenAIService {
             "For dates, use ISO 8601 format (YYYY-MM-DDTHH:mm:ssZ). " +
             "For amounts, use positive numbers only. " +
             "Be precise and only extract information that is clearly present in the email." +
-            "Banco del Pacífico is the *bank name* of the following names: PacifiCard, Pacifico, infopacificard" +
-            "Banco Pichincha is the *bank name* of the following names: Pichincha",
+            "Bank instructions: " +
+            "Banco del Pacifico is the *bank name* of the following names: Banco del Pacífico, PacifiCard, Pacifico, infopacificard" +
+            "Banco Pichincha is the *bank name* of the following names: Pichincha" +
+            "Banco de Guayaquil is the *bank name* of the following names: Banco Guayaquil, Guayaquil, infoguayaquil" +
+            "Produbanco is the *bank name* of the following names: Produbanco",
         },
         { role: "user", content: message },
       ],
@@ -97,7 +92,8 @@ export class OpenAIService {
       const response = await this.createStructuredResponse(message);
       const outputText = (response as any).output_text as string;
       const parsed = JSON.parse(outputText);
-      return TransactionSchema.parse(parsed);
+      const transaction = parsed as Transaction;
+      return transaction;
     } catch (error) {
       const message = getErrorMessage(error);
       console.error("OpenAIService->getTransactionFromEmail()->error", message);

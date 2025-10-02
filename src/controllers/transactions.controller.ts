@@ -10,28 +10,46 @@ const router = Router();
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     console.log("controller->/GET transactions");
-    const date =
-      (req.query.date as string) || format(getEcuadorDate(), "yyyy-MM-dd");
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 100;
-    const type = req.query.type as string;
+    const today = format(getEcuadorDate(), "yyyy-MM-dd");
+    const date = (req.query.date as string) || today;
+    const type = (req.query.type as string) || "all";
 
-    const transactions = await TransactionsService.getAll({
+    // verify the format of the date
+    if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      throw new Error("Invalid date format");
+    }
+
+    const transactions = await TransactionsService.getAllByDay({
       date,
-      page,
-      limit,
       type,
     });
 
-    const totalAmount = transactions.reduce(
-      (acc, transaction) => acc + (transaction.amount || 0),
-      0
-    );
-    res.json({ total: transactions.length, totalAmount, data: transactions });
+    let totalExpenses = 0;
+    let totalIncomes = 0;
+    let totalRefunds = 0;
+
+    for (const transaction of transactions) {
+      if (transaction.type === "expense") {
+        totalExpenses += transaction.amount || 0;
+      }
+      if (transaction.type === "income") {
+        totalIncomes += transaction.amount || 0;
+      }
+      if (transaction.type === "refund") {
+        totalRefunds += transaction.amount || 0;
+      }
+    }
+
+    res.json({
+      data: transactions,
+      totalExpenses,
+      totalIncomes,
+      totalRefunds,
+    });
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions->error", message);
-    res.status(500).json({ data: [], error: "Failed to get transactions" });
+    res.status(500).json({ data: [], error: message });
   }
 });
 
