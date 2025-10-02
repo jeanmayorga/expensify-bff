@@ -16,7 +16,8 @@ export class TransactionsService {
       startEcDay,
       endEcDay,
     });
-    const { data, error } = await supabase
+
+    const query = supabase
       .from("transactions")
       .select("*")
       .gte("occurred_at", startEcDay)
@@ -26,6 +27,20 @@ export class TransactionsService {
         options.page * options.limit - 1
       )
       .order("created_at", { ascending: false });
+
+    if (options.type) {
+      if (options.type === "income") {
+        query.eq("type", "income");
+      }
+      if (options.type === "expense") {
+        query.eq("type", "expense");
+      }
+      if (options.type === "refund") {
+        query.eq("type", "refund");
+      }
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("TransactionsService->getAll()->error", error.message);

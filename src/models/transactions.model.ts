@@ -9,4 +9,5 @@ export type GetAllTransactionsOptions = {
   date: string;
   page: number;
   limit: number;
+  type: string;
 };

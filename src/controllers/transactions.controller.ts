@@ -14,11 +14,13 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       (req.query.date as string) || format(getEcuadorDate(), "yyyy-MM-dd");
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 100;
+    const type = req.query.type as string;
 
     const transactions = await TransactionsService.getAll({
       date,
       page,
       limit,
+      type,
     });
 
     const totalAmount = transactions.reduce(
