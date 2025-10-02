@@ -26,7 +26,7 @@ export class TransactionsService {
         (options.page - 1) * options.limit,
         options.page * options.limit - 1
       )
-      .order("created_at", { ascending: false });
+      .order("occurred_at", { ascending: false });
 
     if (options.type) {
       if (options.type === "income") {
