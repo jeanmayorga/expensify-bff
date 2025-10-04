@@ -20,8 +20,8 @@ export class TransactionsService {
 
     console.log("TransactionsService->getDaily()", {
       ...options,
-      firstTimeOfDay,
-      lastTimeOfDay,
+      firstTimeOfDay: firstTimeOfDay.toISOString(),
+      lastTimeOfDay: lastTimeOfDay.toISOString(),
     });
 
     const query = supabase
