@@ -6,6 +6,6 @@ export type TransactionInsert =
   Database["public"]["Tables"]["transactions"]["Insert"];
 
 export type GetAllTransactionsOptions = {
-  date: string;
+  date: Date;
   type: string;
 };

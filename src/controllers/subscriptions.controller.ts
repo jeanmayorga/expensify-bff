@@ -162,7 +162,7 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
         amount: transactionGenerated.amount,
         occurred_at: transactionGenerated.occurred_at,
         income_message_id: messageId,
-        bank: transactionGenerated.bank || null,
+        bank: transactionGenerated.bank,
       });
       console.log("🤖 newTransaction saved ->", newTransaction?.id);
     }

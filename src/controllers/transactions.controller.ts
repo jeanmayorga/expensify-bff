@@ -2,53 +2,44 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
-import { getEcuadorDate } from "@/utils/ecuador-time";
-import { format } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response): Promise<void> => {
+router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("controller->/GET transactions");
-    const today = format(getEcuadorDate(), "yyyy-MM-dd");
-    const date = (req.query.date as string) || today;
+    console.log("controller->/GET transactions/daily");
+    const dateString = req.query.date as string;
+    const date = dateString
+      ? toZonedTime(dateString, "America/Guayaquil")
+      : new Date();
     const type = (req.query.type as string) || "all";
 
-    // verify the format of the date
-    if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-      throw new Error("Invalid date format");
-    }
-
-    const transactions = await TransactionsService.getAllByDay({
+    const daily = await TransactionsService.getDaily({
       date,
       type,
     });
 
-    let totalExpenses = 0;
-    let totalIncomes = 0;
-    let totalRefunds = 0;
-
-    for (const transaction of transactions) {
-      if (transaction.type === "expense") {
-        totalExpenses += transaction.amount || 0;
-      }
-      if (transaction.type === "income") {
-        totalIncomes += transaction.amount || 0;
-      }
-      if (transaction.type === "refund") {
-        totalRefunds += transaction.amount || 0;
-      }
-    }
-
-    res.json({
-      data: transactions,
-      totalExpenses,
-      totalIncomes,
-      totalRefunds,
-    });
+    res.json(daily);
   } catch (error) {
     const message = getErrorMessage(error);
-    console.error("controller->/GET transactions->error", message);
+    console.error("controller->/GET transactions/daily->error", message);
+    res.status(500).json({ data: [], error: message });
+  }
+});
+
+router.get("/monthly", async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log("controller->/GET transactions/monthly");
+    const dateString = req.query.date as string;
+    const date = dateString ? new Date(dateString) : new Date();
+
+    const monthly = await TransactionsService.getMonthly(date);
+
+    res.json(monthly);
+  } catch (error) {
+    const message = getErrorMessage(error);
+    console.error("controller->/GET transactions/monthly->error", message);
     res.status(500).json({ data: [], error: message });
   }
 });
@@ -58,15 +49,11 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
     const id = Number(req.params.id);
     const transaction = await TransactionsService.getById(id);
 
-    if (!transaction) {
-      res.status(404).json({ data: null, error: "Transaction not found" });
-      return;
-    }
-
     res.json({ data: transaction });
   } catch (error) {
-    console.error("controller -> transaction GET/:id", error);
-    res.status(500).json({ data: null, error: "Failed to get transaction" });
+    const message = getErrorMessage(error);
+    console.error("controller -> transaction GET/:id", message);
+    res.status(500).json({ data: null, error: message });
   }
 });
 

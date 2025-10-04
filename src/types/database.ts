@@ -77,35 +77,35 @@ export type Database = {
       transactions: {
         Row: {
           amount: number | null
-          bank: string | null
+          bank: string
           category: string | null
           created_at: string
           description: string | null
           id: number
           income_message_id: string | null
-          occurred_at: string | null
+          occurred_at: string
           type: string | null
         }
         Insert: {
           amount?: number | null
-          bank?: string | null
+          bank: string
           category?: string | null
           created_at?: string
           description?: string | null
           id?: number
           income_message_id?: string | null
-          occurred_at?: string | null
+          occurred_at: string
           type?: string | null
         }
         Update: {
           amount?: number | null
-          bank?: string | null
+          bank?: string
           category?: string | null
           created_at?: string
           description?: string | null
           id?: number
           income_message_id?: string | null
-          occurred_at?: string | null
+          occurred_at?: string
           type?: string | null
         }
         Relationships: []

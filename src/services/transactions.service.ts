@@ -4,24 +4,31 @@ import {
   Transaction,
   TransactionInsert,
 } from "../models/transactions.model";
-export class TransactionsService {
-  static async getAllByDay(
-    options: GetAllTransactionsOptions
-  ): Promise<Transaction[]> {
-    const startDay = `${options.date}T00:00:00.000`;
-    const endDay = `${options.date}T23:59:59.999`;
+import {
+  eachDayOfInterval,
+  endOfDay,
+  endOfMonth,
+  format,
+  startOfDay,
+  startOfMonth,
+} from "date-fns";
 
-    console.log("TransactionsService->getAll()", {
+export class TransactionsService {
+  static async getDaily(options: GetAllTransactionsOptions) {
+    const firstTimeOfDay = startOfDay(options.date);
+    const lastTimeOfDay = endOfDay(options.date);
+
+    console.log("TransactionsService->getDaily()", {
       ...options,
-      startDay,
-      endDay,
+      firstTimeOfDay,
+      lastTimeOfDay,
     });
 
     const query = supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_at", startDay)
-      .lte("occurred_at", endDay)
+      .gte("occurred_at", firstTimeOfDay.toISOString())
+      .lte("occurred_at", lastTimeOfDay.toISOString())
       .order("occurred_at", { ascending: false });
 
     if (options.type) {
@@ -31,19 +38,94 @@ export class TransactionsService {
       if (options.type === "expense") {
         query.eq("type", "expense");
       }
-      if (options.type === "refund") {
-        query.eq("type", "refund");
-      }
     }
 
     const { data, error } = await query;
 
     if (error) {
-      console.error("TransactionsService->getAll()->error", error.message);
+      console.error("TransactionsService->getDaily()->error", error.message);
       throw error;
     }
 
-    return data || [];
+    const transactions = data || [];
+    let totalExpenses = 0;
+    let totalIncomes = 0;
+    let totalAmount = 0;
+
+    for (const transaction of transactions) {
+      if (transaction.type === "expense") {
+        totalExpenses += transaction.amount || 0;
+        totalAmount -= transaction.amount || 0;
+      }
+      if (transaction.type === "income") {
+        totalIncomes += transaction.amount || 0;
+        totalAmount += transaction.amount || 0;
+      }
+    }
+
+    return {
+      data: transactions,
+      totalExpenses,
+      totalIncomes,
+      totalAmount,
+    };
+  }
+
+  static async getMonthly(date: Date) {
+    const firstDayOfMonth = startOfMonth(date);
+    const lastDayOfMonth = endOfMonth(date);
+
+    console.log("TransactionsService->getMonthly()", {
+      date,
+      firstDayOfMonth,
+      lastDayOfMonth,
+    });
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .gte("occurred_at", firstDayOfMonth.toISOString())
+      .lte("occurred_at", lastDayOfMonth.toISOString());
+
+    if (error) {
+      console.error("TransactionsService->getMonthly()->error", error.message);
+      throw error;
+    }
+
+    const transactions = data || [];
+    const days: Record<string, number> = {};
+    let totalExpenses = 0;
+    let totalIncomes = 0;
+    let totalAmount = 0;
+
+    eachDayOfInterval({
+      start: firstDayOfMonth,
+      end: lastDayOfMonth,
+    }).forEach((day) => {
+      const key = format(day, "yyyy-MM-dd");
+      days[key] = 0;
+    });
+    for (const transaction of transactions) {
+      const date = format(transaction.occurred_at, "yyyy-MM-dd");
+      const amount = transaction.amount || 0;
+      days[date] = (days[date] || 0) + amount;
+
+      if (transaction.type === "expense") {
+        totalExpenses += transaction.amount || 0;
+        totalAmount -= transaction.amount || 0;
+      }
+      if (transaction.type === "income") {
+        totalIncomes += transaction.amount || 0;
+        totalAmount += transaction.amount || 0;
+      }
+    }
+
+    return {
+      data: days,
+      totalExpenses,
+      totalIncomes,
+      totalAmount,
+    };
   }
 
   static async getById(id: number): Promise<Transaction | null> {
@@ -56,7 +138,7 @@ export class TransactionsService {
 
     if (error) {
       console.error("TransactionsService->getById()->error", error.message);
-      return null;
+      throw error;
     }
 
     return data;
