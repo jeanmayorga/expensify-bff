@@ -8,10 +8,7 @@ const router = Router();
 
 router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    const dateString = req.query.date as string;
-    const date = dateString
-      ? toZonedTime(dateString, "America/Guayaquil")
-      : new Date();
+    const date = new Date(req.query.date as string);
     const type = (req.query.type as string) || "all";
     console.log("controller->/GET transactions/daily", { date, type });
 
