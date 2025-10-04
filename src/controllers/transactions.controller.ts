@@ -3,13 +3,15 @@ import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
 import { toZonedTime } from "date-fns-tz";
+import { startOfDay } from "date-fns";
 
 const router = Router();
 
 router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
     const dateString = req.query.date as string;
-    const date = dateString ? new Date(dateString) : new Date();
+    const tzDate = toZonedTime(dateString || new Date(), "America/Guayaquil");
+    const date = startOfDay(tzDate);
     const type = (req.query.type as string) || "all";
     console.log("controller->/GET transactions/daily", { date, type });
 
@@ -28,9 +30,9 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
 
 router.get("/monthly", async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log("controller->/GET transactions/monthly");
     const dateString = req.query.date as string;
     const date = dateString ? new Date(dateString) : new Date();
-    console.log("controller->/GET transactions/monthly", { date });
 
     const monthly = await TransactionsService.getMonthly(date);
 
