@@ -8,12 +8,12 @@ const router = Router();
 
 router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("controller->/GET transactions/daily");
     const dateString = req.query.date as string;
     const date = dateString
       ? toZonedTime(dateString, "America/Guayaquil")
       : new Date();
     const type = (req.query.type as string) || "all";
+    console.log("controller->/GET transactions/daily", { date, type });
 
     const daily = await TransactionsService.getDaily({
       date,
@@ -30,9 +30,9 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
 
 router.get("/monthly", async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log("controller->/GET transactions/monthly");
     const dateString = req.query.date as string;
     const date = dateString ? new Date(dateString) : new Date();
+    console.log("controller->/GET transactions/monthly", { date });
 
     const monthly = await TransactionsService.getMonthly(date);
 
