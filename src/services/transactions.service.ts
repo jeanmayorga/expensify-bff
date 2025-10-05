@@ -12,10 +12,11 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
+import { getEcuadorDate } from "@/utils/ecuador-time";
 export class TransactionsService {
   static async getDaily(options: GetAllTransactionsOptions) {
-    const firstTimeOfDay = startOfDay(options.date);
-    const lastTimeOfDay = endOfDay(options.date);
+    const firstTimeOfDay = getEcuadorDate(startOfDay(options.date));
+    const lastTimeOfDay = getEcuadorDate(endOfDay(options.date));
 
     console.log("TransactionsService->getDaily()", {
       ...options,
