@@ -2,32 +2,23 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
-import { getEcuadorDate } from "@/utils/ecuador-time";
-import { endOfDay, startOfDay } from "date-fns";
+import { endOfDay, endOfMonth, startOfDay, startOfMonth } from "date-fns";
 
 const router = Router();
 
 router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    const dateString = req.query.date as string;
+    const dateString = req.query.start as string;
     const date = dateString ? new Date(dateString) : new Date();
     const type = (req.query.type as string) || "all";
-
-    const dateEcuador = getEcuadorDate(date);
-    const startDateEcuador = startOfDay(dateEcuador);
-    const endDateEcuador = endOfDay(dateEcuador);
 
     const startDate = startOfDay(date);
     const endDate = endOfDay(date);
 
     console.log("controller->/GET transactions/daily", {
       type,
-      date,
       startDate,
       endDate,
-      dateEcuador,
-      startDateEcuador,
-      endDateEcuador,
     });
 
     const daily = await TransactionsService.getTxsBetweenDates({
@@ -50,7 +41,13 @@ router.get("/monthly", async (req: Request, res: Response): Promise<void> => {
     const date = dateString ? new Date(dateString) : new Date();
     console.log("controller->/GET transactions/monthly UTC", { date });
 
-    const monthly = await TransactionsService.getMonthly(date);
+    const startDate = startOfMonth(date);
+    const endDate = endOfMonth(date);
+
+    const monthly = await TransactionsService.getSummaryBetweenDates({
+      startDate,
+      endDate,
+    });
 
     res.json(monthly);
   } catch (error) {

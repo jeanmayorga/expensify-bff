@@ -1,10 +1,6 @@
 import { supabase } from "./supabase.service";
-import {
-  GetAllTransactionsOptions,
-  Transaction,
-  TransactionInsert,
-} from "../models/transactions.model";
-import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
+import { Transaction, TransactionInsert } from "../models/transactions.model";
+import { eachDayOfInterval, format } from "date-fns";
 
 export class TransactionsService {
   static async getTxsBetweenDates(options: {
@@ -64,24 +60,23 @@ export class TransactionsService {
     };
   }
 
-  static async getMonthly(date: Date) {
-    const firstDayOfMonth = startOfMonth(date);
-    const lastDayOfMonth = endOfMonth(date);
-
-    console.log("TransactionsService->getMonthly()", {
-      date,
-      firstDayOfMonth,
-      lastDayOfMonth,
-    });
+  static async getSummaryBetweenDates(options: {
+    startDate: Date;
+    endDate: Date;
+  }) {
+    console.log("TransactionsService->getSummaryBetweenDates()", options);
 
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_at", firstDayOfMonth.toISOString())
-      .lte("occurred_at", lastDayOfMonth.toISOString());
+      .gte("occurred_at", options.startDate.toISOString())
+      .lte("occurred_at", options.endDate.toISOString());
 
     if (error) {
-      console.error("TransactionsService->getMonthly()->error", error.message);
+      console.error(
+        "TransactionsService->getSummaryBetweenDates()->error",
+        error.message
+      );
       throw error;
     }
 
@@ -92,8 +87,8 @@ export class TransactionsService {
     let totalAmount = 0;
 
     eachDayOfInterval({
-      start: firstDayOfMonth,
-      end: lastDayOfMonth,
+      start: options.startDate,
+      end: options.endDate,
     }).forEach((day) => {
       const key = format(day, "yyyy-MM-dd");
       days[key] = 0;
