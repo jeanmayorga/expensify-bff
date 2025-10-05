@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.service";
 import { Transaction, TransactionInsert } from "../models/transactions.model";
 import { eachDayOfInterval } from "date-fns";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 export class TransactionsService {
   static async getTxsBetweenDates(options: {
@@ -86,51 +87,34 @@ export class TransactionsService {
     let totalIncomes = 0;
     let totalAmount = 0;
 
-    const startUTC = new Date(
-      Date.UTC(
-        options.startDate.getUTCFullYear(),
-        options.startDate.getUTCMonth(),
-        options.startDate.getUTCDate()
-      )
+    const timeZone = "America/Guayaquil";
+    const startTimeStr = formatInTimeZone(
+      options.startDate,
+      timeZone,
+      "HH:mm:ss.SSS"
     );
-    const endUTC = new Date(
-      Date.UTC(
-        options.endDate.getUTCFullYear(),
-        options.endDate.getUTCMonth(),
-        options.endDate.getUTCDate()
-      )
-    );
-    const referenceForTime = new Date(options.startDate);
     eachDayOfInterval({
-      start: startUTC,
-      end: endUTC,
+      start: options.startDate,
+      end: options.endDate,
     }).forEach((day) => {
-      const zonedDay = new Date(day);
-      zonedDay.setUTCHours(
-        referenceForTime.getUTCHours(),
-        referenceForTime.getUTCMinutes(),
-        referenceForTime.getUTCSeconds(),
-        referenceForTime.getUTCMilliseconds()
-      );
-      if (zonedDay <= options.endDate) {
-        const key = zonedDay.toISOString();
-        // const key = zonedDay.toISOString().split("T")[0] || ""; // yyyy-mm-dd
+      const dayStr = formatInTimeZone(day, timeZone, "yyyy-MM-dd");
+      const localDateTime = `${dayStr}T${startTimeStr}`;
+      const keyDateUtc = fromZonedTime(localDateTime, timeZone);
+      if (keyDateUtc <= options.endDate) {
+        const key = keyDateUtc.toISOString();
         days[key] = 0;
       }
     });
 
     for (const transaction of transactions) {
-      const start = new Date(options.startDate);
-      const created = new Date(transaction.created_at);
-      created.setUTCHours(
-        start.getUTCHours(),
-        start.getUTCMinutes(),
-        start.getUTCSeconds(),
-        start.getUTCMilliseconds()
+      const dayStr = formatInTimeZone(
+        transaction.created_at,
+        timeZone,
+        "yyyy-MM-dd"
       );
-
-      const date = created.toISOString();
-      // const date = created.toISOString().split("T")[0] || ""; // yyyy-mm-dd
+      const localDateTime = `${dayStr}T${startTimeStr}`;
+      const keyDateUtc = fromZonedTime(localDateTime, timeZone);
+      const date = keyDateUtc.toISOString();
       const amount = transaction.amount || 0;
       const currentDayAmount = days[date] || 0;
       days[date] = currentDayAmount + amount;
