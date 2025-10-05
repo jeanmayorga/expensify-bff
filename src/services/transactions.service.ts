@@ -90,8 +90,16 @@ export class TransactionsService {
       start: options.startDate,
       end: options.endDate,
     }).forEach((day) => {
-      const key = day.toISOString();
-      // const key = day.toISOString().split("T")[0] || ""; // yyyy-mm-dd
+      const referenceForTime = new Date(options.startDate);
+      const zonedDay = new Date(day);
+      zonedDay.setHours(
+        referenceForTime.getHours(),
+        referenceForTime.getMinutes(),
+        referenceForTime.getSeconds(),
+        referenceForTime.getMilliseconds()
+      );
+      const key = zonedDay.toISOString();
+      // const key = zonedDay.toISOString().split("T")[0] || ""; // yyyy-mm-dd
       days[key] = 0;
     });
 
