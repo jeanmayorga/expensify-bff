@@ -25,16 +25,16 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
       date,
       startDate,
       startDateEcuador,
-      startDateISO: startDate.toISOString(),
       startDateEcuadorISO: startDateEcuador.toISOString(),
-      startDateUTC: startDate.toUTCString(),
       startDateEcuadorUTC: startDateEcuador.toUTCString(),
+      startDateISO: startDate.toISOString(),
+      startDateUTC: startDate.toUTCString(),
       endDate,
       endDateEcuador,
-      endDateISO: endDate.toISOString(),
       endDateEcuadorISO: endDateEcuador.toISOString(),
-      endDateUTC: endDate.toUTCString(),
       endDateEcuadorUTC: endDateEcuador.toUTCString(),
+      endDateISO: endDate.toISOString(),
+      endDateUTC: endDate.toUTCString(),
     });
 
     const daily = await TransactionsService.getTxsBetweenDates({
