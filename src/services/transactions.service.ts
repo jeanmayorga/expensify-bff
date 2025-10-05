@@ -90,8 +90,8 @@ export class TransactionsService {
       start: options.startDate,
       end: options.endDate,
     }).forEach((day) => {
-      // const key = day.toISOString();
-      const key = day.toISOString().split("T")[0] || ""; // yyyy-mm-dd
+      const key = day.toISOString();
+      // const key = day.toISOString().split("T")[0] || ""; // yyyy-mm-dd
       days[key] = 0;
     });
 
@@ -105,8 +105,8 @@ export class TransactionsService {
         start.getMilliseconds()
       );
 
-      // const date = created.toISOString();
-      const date = created.toISOString().split("T")[0] || ""; // yyyy-mm-dd
+      const date = created.toISOString();
+      // const date = created.toISOString().split("T")[0] || ""; // yyyy-mm-dd
       const amount = transaction.amount || 0;
       const currentDayAmount = days[date] || 0;
       days[date] = currentDayAmount + amount;
