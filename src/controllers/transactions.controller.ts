@@ -24,13 +24,13 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const startDate = toZonedTime(startOfDay(date), timeZone);
     const endDate = toZonedTime(endOfDay(date), timeZone);
-    // const startDate = fromZonedTime(startString, timeZone);
-    // const endDate = fromZonedTime(endString, timeZone);
 
     console.log("controller->/GET transactions/", {
       type,
       date,
       dateTz,
+      startDateFromZonedTime: fromZonedTime(startOfDay(dateString), timeZone),
+      endDateFromZonedTime: fromZonedTime(endOfDay(dateString), timeZone),
       startDate,
       endDate,
     });
@@ -41,7 +41,11 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       type: type || "all",
     });
 
-    res.json(txs);
+    res.json({
+      startDateFromZonedTime: fromZonedTime(startOfDay(dateString), timeZone),
+      endDateFromZonedTime: fromZonedTime(endOfDay(dateString), timeZone),
+      ...txs,
+    });
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions/daily->error", message);
