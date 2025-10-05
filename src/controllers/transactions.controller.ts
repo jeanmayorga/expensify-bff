@@ -20,7 +20,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const timeZone = "America/Guayaquil";
     const date = fromZonedTime(dateString, timeZone);
-    const dateTz = toZonedTime(date, timeZone);
+    const dateTz = toZonedTime(dateString, timeZone);
     const startDate = startOfDay(date);
     const endDate = endOfDay(date);
     // const startDate = fromZonedTime(startString, timeZone);
