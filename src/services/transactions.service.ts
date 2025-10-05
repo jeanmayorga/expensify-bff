@@ -4,15 +4,8 @@ import {
   Transaction,
   TransactionInsert,
 } from "../models/transactions.model";
-import {
-  eachDayOfInterval,
-  endOfDay,
-  endOfMonth,
-  format,
-  startOfDay,
-  startOfMonth,
-} from "date-fns";
-import { getEcuadorDate } from "@/utils/ecuador-time";
+import { eachDayOfInterval, endOfMonth, format, startOfMonth } from "date-fns";
+
 export class TransactionsService {
   static async getTxsBetweenDates(options: {
     startDate: Date;
@@ -64,10 +57,6 @@ export class TransactionsService {
     }
 
     return {
-      firstTimeOfDay: options.startDate.toISOString(),
-      lastTimeOfDay: options.endDate.toISOString(),
-      firstTimeOfDayEcuador: getEcuadorDate(options.startDate).toISOString(),
-      lastTimeOfDayEcuador: getEcuadorDate(options.endDate).toISOString(),
       totalExpenses,
       totalIncomes,
       totalAmount,
