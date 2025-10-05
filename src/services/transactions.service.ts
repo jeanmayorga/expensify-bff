@@ -87,37 +87,32 @@ export class TransactionsService {
     let totalIncomes = 0;
     let totalAmount = 0;
 
-    const timeZone = "America/Guayaquil";
-    const startTimeStr = formatInTimeZone(
-      options.startDate,
-      timeZone,
-      "HH:mm:ss.SSS"
-    );
+    // const timeZone = "America/Guayaquil";
+    // const startTimeStr = formatInTimeZone(
+    //   options.startDate,
+    //   timeZone,
+    //   "HH:mm:ss.SSS"
+    // );
     eachDayOfInterval({
       start: options.startDate,
       end: options.endDate,
     }).forEach((day) => {
-      const dayStr = formatInTimeZone(day, timeZone, "yyyy-MM-dd");
-      const localDateTime = `${dayStr}T${startTimeStr}`;
-      const keyDateUtc = fromZonedTime(localDateTime, timeZone);
-      if (keyDateUtc <= options.endDate) {
-        const key = keyDateUtc.toISOString();
-        days[key] = 0;
-      }
+      const key = day.toISOString();
+      days[key] = 0;
     });
 
     for (const transaction of transactions) {
-      const dayStr = formatInTimeZone(
-        transaction.created_at,
-        timeZone,
-        "yyyy-MM-dd"
-      );
-      const localDateTime = `${dayStr}T${startTimeStr}`;
-      const keyDateUtc = fromZonedTime(localDateTime, timeZone);
-      const date = keyDateUtc.toISOString();
-      const amount = transaction.amount || 0;
-      const currentDayAmount = days[date] || 0;
-      days[date] = currentDayAmount + amount;
+      // const dayStr = formatInTimeZone(
+      //   transaction.created_at,
+      //   timeZone,
+      //   "yyyy-MM-dd"
+      // );
+      // const localDateTime = `${dayStr}T${startTimeStr}`;
+      // const keyDateUtc = fromZonedTime(localDateTime, timeZone);
+      // const date = keyDateUtc.toISOString();
+      // const amount = transaction.amount || 0;
+      // const currentDayAmount = days[date] || 0;
+      // days[date] = currentDayAmount + amount;
 
       if (transaction.type === "expense") {
         totalExpenses += transaction.amount || 0;
