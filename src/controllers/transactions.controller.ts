@@ -8,25 +8,24 @@ const router = Router();
 
 router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    const dateString = req.query.date as string;
-    const date = dateString ? new Date(dateString) : new Date();
-    const type = (req.query.type as string) || "all";
+    const startString = req.query.start as string;
+    const endString = req.query.end as string;
+    const type = req.query.type as string;
 
-    const startDate = startOfDay(date);
-    const endDate = endOfDay(date);
+    if (!startString || !endString) {
+      throw new Error("start and end are required");
+    }
 
     console.log("controller->/GET transactions/daily", {
       type,
-      dateString,
-      date: date.toISOString(),
-      startDate,
-      endDate,
+      startString,
+      endString,
     });
 
     const daily = await TransactionsService.getTxsBetweenDates({
-      startDate,
-      endDate,
-      type,
+      startDate: new Date(startString),
+      endDate: new Date(endString),
+      type: type || "all",
     });
 
     res.json(daily);
