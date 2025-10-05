@@ -19,36 +19,25 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     const timeZone = "America/Guayaquil";
-    const date = fromZonedTime(dateString, timeZone);
-    const dateTz = toZonedTime(dateString, timeZone);
-
-    const startDate = toZonedTime(startOfDay(date), timeZone);
-    const endDate = toZonedTime(endOfDay(date), timeZone);
+    const startDateFromZonedTime = fromZonedTime(
+      startOfDay(dateString),
+      timeZone
+    );
+    const endDateFromZonedTime = fromZonedTime(endOfDay(dateString), timeZone);
 
     console.log("controller->/GET transactions/", {
       type,
-      date,
-      dateTz,
-      startDateFromZonedTime: fromZonedTime(startOfDay(dateString), timeZone),
-      endDateFromZonedTime: fromZonedTime(endOfDay(dateString), timeZone),
-      startDate,
-      endDate,
+      startDateFromZonedTime,
+      endDateFromZonedTime,
     });
 
     const txs = await TransactionsService.getTxsBetweenDates({
-      startDate: startDate,
-      endDate: endDate,
+      startDate: startDateFromZonedTime,
+      endDate: endDateFromZonedTime,
       type: type || "all",
     });
 
-    res.json({
-      dateString,
-      startDateToZonedTime: toZonedTime(startOfDay(dateString), timeZone),
-      endDateToZonedTime: toZonedTime(endOfDay(dateString), timeZone),
-      startDateFromZonedTime: fromZonedTime(startOfDay(dateString), timeZone),
-      endDateFromZonedTime: fromZonedTime(endOfDay(dateString), timeZone),
-      ...txs,
-    });
+    res.json(txs);
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions/daily->error", message);
