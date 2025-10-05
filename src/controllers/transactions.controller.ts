@@ -2,11 +2,11 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
-import { endOfDay, endOfMonth, startOfDay, startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth } from "date-fns";
 
 const router = Router();
 
-router.get("/daily", async (req: Request, res: Response): Promise<void> => {
+router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const startString = req.query.start as string;
     const endString = req.query.end as string;
@@ -16,19 +16,19 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
       throw new Error("start and end are required");
     }
 
-    console.log("controller->/GET transactions/daily", {
+    console.log("controller->/GET transactions/", {
       type,
       startString,
       endString,
     });
 
-    const daily = await TransactionsService.getTxsBetweenDates({
+    const txs = await TransactionsService.getTxsBetweenDates({
       startDate: new Date(startString),
       endDate: new Date(endString),
       type: type || "all",
     });
 
-    res.json(daily);
+    res.json(txs);
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions/daily->error", message);
@@ -36,21 +36,25 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.get("/monthly", async (req: Request, res: Response): Promise<void> => {
+router.get("/summary", async (req: Request, res: Response): Promise<void> => {
   try {
-    const dateString = req.query.date as string;
-    const date = dateString ? new Date(dateString) : new Date();
-    console.log("controller->/GET transactions/monthly UTC", { date });
+    const startString = req.query.start as string;
+    const endString = req.query.end as string;
 
-    const startDate = startOfMonth(date);
-    const endDate = endOfMonth(date);
-
-    const monthly = await TransactionsService.getSummaryBetweenDates({
-      startDate,
-      endDate,
+    if (!startString || !endString) {
+      throw new Error("start and end are required");
+    }
+    console.log("controller->/GET transactions/summary", {
+      startString,
+      endString,
     });
 
-    res.json(monthly);
+    const summary = await TransactionsService.getSummaryBetweenDates({
+      startDate: new Date(startString),
+      endDate: new Date(endString),
+    });
+
+    res.json(summary);
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions/monthly->error", message);
