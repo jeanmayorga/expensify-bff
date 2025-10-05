@@ -15,7 +15,6 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     if (!startString || !endString) {
       throw new Error("start and end are required");
     }
-
     console.log("controller->/GET transactions/", {
       type,
       startString,

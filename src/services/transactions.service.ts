@@ -53,10 +53,10 @@ export class TransactionsService {
     }
 
     return {
+      data: transactions,
       totalExpenses,
       totalIncomes,
       totalAmount,
-      data: transactions,
     };
   }
 
@@ -91,7 +91,7 @@ export class TransactionsService {
       end: options.endDate,
     }).forEach((day) => {
       // const key = day.toISOString();
-      const key = day.toISOString().split("T")[0] || "";
+      const key = day.toISOString().split("T")[0] || ""; // yyyy-mm-dd
       days[key] = 0;
     });
 
@@ -106,7 +106,7 @@ export class TransactionsService {
       );
 
       // const date = created.toISOString();
-      const date = created.toISOString().split("T")[0] || "";
+      const date = created.toISOString().split("T")[0] || ""; // yyyy-mm-dd
       const amount = transaction.amount || 0;
       const currentDayAmount = days[date] || 0;
       days[date] = currentDayAmount + amount;
