@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
-import { fromZonedTime } from "date-fns-tz";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { endOfDay, startOfDay } from "date-fns";
 
 const router = Router();
@@ -20,6 +20,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     const timeZone = "America/Guayaquil";
     const date = fromZonedTime(dateString, timeZone);
+    const dateTz = toZonedTime(date, timeZone);
     const startDate = startOfDay(date);
     const endDate = endOfDay(date);
     // const startDate = fromZonedTime(startString, timeZone);
@@ -28,6 +29,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     console.log("controller->/GET transactions/", {
       type,
       date,
+      dateTz,
       startDate,
       endDate,
     });
