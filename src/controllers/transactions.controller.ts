@@ -42,6 +42,9 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     });
 
     res.json({
+      dateString,
+      startDateToZonedTime: toZonedTime(startOfDay(dateString), timeZone),
+      endDateToZonedTime: toZonedTime(endOfDay(dateString), timeZone),
       startDateFromZonedTime: fromZonedTime(startOfDay(dateString), timeZone),
       endDateFromZonedTime: fromZonedTime(endOfDay(dateString), timeZone),
       ...txs,
