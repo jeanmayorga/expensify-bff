@@ -1,7 +1,6 @@
 import { supabase } from "./supabase.service";
 import { Transaction, TransactionInsert } from "../models/transactions.model";
 import { eachDayOfInterval } from "date-fns";
-import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 export class TransactionsService {
   static async getTxsBetweenDates(options: {

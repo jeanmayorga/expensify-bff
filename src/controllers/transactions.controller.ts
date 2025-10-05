@@ -2,27 +2,39 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
+import { fromZonedTime } from "date-fns-tz";
+import { endOfDay, startOfDay } from "date-fns";
 
 const router = Router();
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const startString = req.query.start as string;
-    const endString = req.query.end as string;
+    const dateString = req.query.date as string;
+    // const startString = req.query.start as string;
+    // const endString = req.query.end as string;
     const type = req.query.type as string;
 
-    if (!startString || !endString) {
-      throw new Error("start and end are required");
+    if (!dateString) {
+      throw new Error("date are required");
     }
+
+    const timeZone = "America/Guayaquil";
+    const date = fromZonedTime(dateString, timeZone);
+    const startDate = startOfDay(date);
+    const endDate = endOfDay(date);
+    // const startDate = fromZonedTime(startString, timeZone);
+    // const endDate = fromZonedTime(endString, timeZone);
+
     console.log("controller->/GET transactions/", {
       type,
-      startString,
-      endString,
+      date,
+      startDate,
+      endDate,
     });
 
     const txs = await TransactionsService.getTxsBetweenDates({
-      startDate: new Date(startString),
-      endDate: new Date(endString),
+      startDate: startDate,
+      endDate: endDate,
       type: type || "all",
     });
 
