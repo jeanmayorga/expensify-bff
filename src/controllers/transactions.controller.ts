@@ -8,8 +8,8 @@ const router = Router();
 
 router.get("/daily", async (req: Request, res: Response): Promise<void> => {
   try {
-    const dateString = req.query.start as string;
-    const date = dateString ? new Date(dateString) : new Date().setUTCDate(-5);
+    const dateString = req.query.date as string;
+    const date = dateString ? new Date(dateString) : new Date();
     const type = (req.query.type as string) || "all";
 
     const startDate = startOfDay(date);
@@ -17,6 +17,8 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
 
     console.log("controller->/GET transactions/daily", {
       type,
+      dateString,
+      date: date.toISOString(),
       startDate,
       endDate,
     });
