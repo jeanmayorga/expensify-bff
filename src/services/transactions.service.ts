@@ -1,6 +1,6 @@
 import { supabase } from "./supabase.service";
 import { Transaction, TransactionInsert } from "../models/transactions.model";
-import { eachDayOfInterval, format } from "date-fns";
+import { eachDayOfInterval } from "date-fns";
 
 export class TransactionsService {
   static async getTxsBetweenDates(options: {
@@ -13,9 +13,9 @@ export class TransactionsService {
     const query = supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_at", options.startDate.toISOString())
-      .lte("occurred_at", options.endDate.toISOString())
-      .order("occurred_at", { ascending: false });
+      .gte("created_at", options.startDate.toISOString())
+      .lte("created_at", options.endDate.toISOString())
+      .order("created_at", { ascending: false });
 
     if (options.type) {
       if (options.type === "income") {
@@ -69,8 +69,8 @@ export class TransactionsService {
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_at", options.startDate.toISOString())
-      .lte("occurred_at", options.endDate.toISOString());
+      .gte("created_at", options.startDate.toISOString())
+      .lte("created_at", options.endDate.toISOString());
 
     if (error) {
       console.error(
@@ -90,13 +90,26 @@ export class TransactionsService {
       start: options.startDate,
       end: options.endDate,
     }).forEach((day) => {
-      const key = format(day, "yyyy-MM-dd");
+      // const key = day.toISOString();
+      const key = day.toISOString().split("T")[0] || "";
       days[key] = 0;
     });
+
     for (const transaction of transactions) {
-      const date = format(transaction.occurred_at, "yyyy-MM-dd");
+      const start = new Date(options.startDate);
+      const created = new Date(transaction.created_at);
+      created.setHours(
+        start.getHours(),
+        start.getMinutes(),
+        start.getSeconds(),
+        start.getMilliseconds()
+      );
+
+      // const date = created.toISOString();
+      const date = created.toISOString().split("T")[0] || "";
       const amount = transaction.amount || 0;
-      days[date] = (days[date] || 0) + amount;
+      const currentDayAmount = days[date] || 0;
+      days[date] = currentDayAmount + amount;
 
       if (transaction.type === "expense") {
         totalExpenses += transaction.amount || 0;
