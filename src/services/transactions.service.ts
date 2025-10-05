@@ -86,31 +86,47 @@ export class TransactionsService {
     let totalIncomes = 0;
     let totalAmount = 0;
 
+    const startUTC = new Date(
+      Date.UTC(
+        options.startDate.getUTCFullYear(),
+        options.startDate.getUTCMonth(),
+        options.startDate.getUTCDate()
+      )
+    );
+    const endUTC = new Date(
+      Date.UTC(
+        options.endDate.getUTCFullYear(),
+        options.endDate.getUTCMonth(),
+        options.endDate.getUTCDate()
+      )
+    );
+    const referenceForTime = new Date(options.startDate);
     eachDayOfInterval({
-      start: options.startDate,
-      end: options.endDate,
+      start: startUTC,
+      end: endUTC,
     }).forEach((day) => {
-      const referenceForTime = new Date(options.startDate);
       const zonedDay = new Date(day);
-      zonedDay.setHours(
-        referenceForTime.getHours(),
-        referenceForTime.getMinutes(),
-        referenceForTime.getSeconds(),
-        referenceForTime.getMilliseconds()
+      zonedDay.setUTCHours(
+        referenceForTime.getUTCHours(),
+        referenceForTime.getUTCMinutes(),
+        referenceForTime.getUTCSeconds(),
+        referenceForTime.getUTCMilliseconds()
       );
-      const key = zonedDay.toISOString();
-      // const key = zonedDay.toISOString().split("T")[0] || ""; // yyyy-mm-dd
-      days[key] = 0;
+      if (zonedDay <= options.endDate) {
+        const key = zonedDay.toISOString();
+        // const key = zonedDay.toISOString().split("T")[0] || ""; // yyyy-mm-dd
+        days[key] = 0;
+      }
     });
 
     for (const transaction of transactions) {
       const start = new Date(options.startDate);
       const created = new Date(transaction.created_at);
-      created.setHours(
-        start.getHours(),
-        start.getMinutes(),
-        start.getSeconds(),
-        start.getMilliseconds()
+      created.setUTCHours(
+        start.getUTCHours(),
+        start.getUTCMinutes(),
+        start.getUTCSeconds(),
+        start.getUTCMilliseconds()
       );
 
       const date = created.toISOString();
