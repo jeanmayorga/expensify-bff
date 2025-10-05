@@ -14,21 +14,18 @@ import {
 } from "date-fns";
 import { getEcuadorDate } from "@/utils/ecuador-time";
 export class TransactionsService {
-  static async getDaily(options: GetAllTransactionsOptions) {
-    const firstTimeOfDay = getEcuadorDate(startOfDay(options.date));
-    const lastTimeOfDay = getEcuadorDate(endOfDay(options.date));
-
-    console.log("TransactionsService->getDaily()", {
-      ...options,
-      firstTimeOfDay: firstTimeOfDay.toISOString(),
-      lastTimeOfDay: lastTimeOfDay.toISOString(),
-    });
+  static async getTxsBetweenDates(options: {
+    startDate: Date;
+    endDate: Date;
+    type?: string;
+  }) {
+    console.log("TransactionsService->getTxsBetweenDates()", options);
 
     const query = supabase
       .from("transactions")
       .select("*")
-      .gte("occurred_at", firstTimeOfDay.toISOString())
-      .lte("occurred_at", lastTimeOfDay.toISOString())
+      .gte("occurred_at", options.startDate.toISOString())
+      .lte("occurred_at", options.endDate.toISOString())
       .order("occurred_at", { ascending: false });
 
     if (options.type) {
@@ -43,7 +40,10 @@ export class TransactionsService {
     const { data, error } = await query;
 
     if (error) {
-      console.error("TransactionsService->getDaily()->error", error.message);
+      console.error(
+        "TransactionsService->getTxsBetweenDates()->error",
+        error.message
+      );
       throw error;
     }
 
@@ -64,9 +64,10 @@ export class TransactionsService {
     }
 
     return {
-      date: options.date.toISOString(),
-      firstTimeOfDay: firstTimeOfDay.toISOString(),
-      lastTimeOfDay: lastTimeOfDay.toISOString(),
+      firstTimeOfDay: options.startDate.toISOString(),
+      lastTimeOfDay: options.endDate.toISOString(),
+      firstTimeOfDayEcuador: getEcuadorDate(options.startDate).toISOString(),
+      lastTimeOfDayEcuador: getEcuadorDate(options.endDate).toISOString(),
       totalExpenses,
       totalIncomes,
       totalAmount,

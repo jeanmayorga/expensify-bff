@@ -2,6 +2,8 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
+import { getEcuadorDate } from "@/utils/ecuador-time";
+import { endOfDay, startOfDay } from "date-fns";
 
 const router = Router();
 
@@ -10,10 +12,26 @@ router.get("/daily", async (req: Request, res: Response): Promise<void> => {
     const dateString = req.query.date as string;
     const date = dateString ? new Date(dateString) : new Date();
     const type = (req.query.type as string) || "all";
-    console.log("controller->/GET transactions/daily UTC", { date, type });
 
-    const daily = await TransactionsService.getDaily({
+    const dateEcuador = getEcuadorDate(date);
+    const startDateEcuador = startOfDay(dateEcuador);
+    const endDateEcuador = endOfDay(dateEcuador);
+
+    const startDate = startOfDay(date);
+    const endDate = endOfDay(date);
+
+    console.log("controller->/GET transactions/daily", {
+      type,
       date,
+      startDate,
+      endDate,
+      startDateEcuador,
+      endDateEcuador,
+    });
+
+    const daily = await TransactionsService.getTxsBetweenDates({
+      startDate,
+      endDate,
       type,
     });
 
