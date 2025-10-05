@@ -12,7 +12,6 @@ import {
   startOfDay,
   startOfMonth,
 } from "date-fns";
-
 export class TransactionsService {
   static async getDaily(options: GetAllTransactionsOptions) {
     const firstTimeOfDay = startOfDay(options.date);
@@ -64,10 +63,13 @@ export class TransactionsService {
     }
 
     return {
-      data: transactions,
+      date: options.date.toISOString(),
+      firstTimeOfDay: firstTimeOfDay.toISOString(),
+      lastTimeOfDay: lastTimeOfDay.toISOString(),
       totalExpenses,
       totalIncomes,
       totalAmount,
+      data: transactions,
     };
   }
 

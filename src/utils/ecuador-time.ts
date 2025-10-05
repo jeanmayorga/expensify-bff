@@ -1,4 +1,4 @@
-import { format, toZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 export function getEcuadorDate(date?: Date | string): Date {
   const now = date ? new Date(date) : new Date();
