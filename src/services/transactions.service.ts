@@ -1,6 +1,7 @@
 import { supabase } from "./supabase.service";
 import { Transaction, TransactionInsert } from "../models/transactions.model";
-import { eachDayOfInterval } from "date-fns";
+import { eachDayOfInterval, format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 export class TransactionsService {
   static async getTxsBetweenDates(options: {
@@ -88,32 +89,24 @@ export class TransactionsService {
     let totalIncomes = 0;
     let totalAmount = 0;
 
-    // const timeZone = "America/Guayaquil";
-    // const startTimeStr = formatInTimeZone(
-    //   options.startDate,
-    //   timeZone,
-    //   "HH:mm:ss.SSS"
-    // );
+    const timeZone = "America/Guayaquil";
+
     eachDayOfInterval({
-      start: options.startDate,
-      end: options.endDate,
+      start: toZonedTime(options.startDate, timeZone),
+      end: toZonedTime(options.endDate, timeZone),
     }).forEach((day) => {
-      const key = day.toISOString();
+      const key = format(day, "yyyy-MM-dd");
       days[key] = 0;
     });
 
     for (const transaction of transactions) {
-      // const dayStr = formatInTimeZone(
-      //   transaction.created_at,
-      //   timeZone,
-      //   "yyyy-MM-dd"
-      // );
-      // const localDateTime = `${dayStr}T${startTimeStr}`;
-      // const keyDateUtc = fromZonedTime(localDateTime, timeZone);
-      // const date = keyDateUtc.toISOString();
-      // const amount = transaction.amount || 0;
-      // const currentDayAmount = days[date] || 0;
-      // days[date] = currentDayAmount + amount;
+      const currentDay = format(
+        toZonedTime(transaction.created_at, timeZone),
+        "yyyy-MM-dd"
+      );
+      const amount = transaction.amount || 0;
+      const currentDayAmount = days[currentDay] || 0;
+      days[currentDay] = currentDayAmount + amount;
 
       if (transaction.type === "expense") {
         totalExpenses += transaction.amount || 0;

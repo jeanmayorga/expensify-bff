@@ -2,21 +2,17 @@ import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
 import { TransactionInsert } from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
-import { endOfDay, startOfDay } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
+import { endOfDay, endOfMonth, startOfDay, startOfMonth } from "date-fns";
 
 const router = Router();
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const dateString = req.query.date as string;
-    // const startString = req.query.start as string;
-    // const endString = req.query.end as string;
     const type = req.query.type as string;
 
-    if (!dateString) {
-      throw new Error("date are required");
-    }
+    if (!dateString) throw new Error("date are required");
 
     const timeZone = "America/Guayaquil";
     const startDate = startOfDay(dateString);
@@ -30,13 +26,13 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
       endDateFromZonedTime,
     });
 
-    const txs = await TransactionsService.getTxsBetweenDates({
+    const data = await TransactionsService.getTxsBetweenDates({
       startDate: startDateFromZonedTime,
       endDate: endDateFromZonedTime,
       type: type || "all",
     });
 
-    res.json(txs);
+    res.json(data);
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions/daily->error", message);
@@ -46,23 +42,27 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
 router.get("/summary", async (req: Request, res: Response): Promise<void> => {
   try {
-    const startString = req.query.start as string;
-    const endString = req.query.end as string;
+    const dateString = req.query.date as string;
 
-    if (!startString || !endString) {
-      throw new Error("start and end are required");
-    }
+    if (!dateString) throw new Error("date are required");
+
+    const timeZone = "America/Guayaquil";
+    const startDate = startOfMonth(dateString);
+    const endDate = endOfMonth(dateString);
+    const startDateFromZonedTime = fromZonedTime(startDate, timeZone);
+    const endDateFromZonedTime = fromZonedTime(endDate, timeZone);
+
     console.log("controller->/GET transactions/summary", {
-      startString,
-      endString,
+      startDateFromZonedTime,
+      endDateFromZonedTime,
     });
 
-    const summary = await TransactionsService.getSummaryBetweenDates({
-      startDate: new Date(startString),
-      endDate: new Date(endString),
+    const data = await TransactionsService.getSummaryBetweenDates({
+      startDate: startDateFromZonedTime,
+      endDate: endDateFromZonedTime,
     });
 
-    res.json(summary);
+    res.json(data);
   } catch (error) {
     const message = getErrorMessage(error);
     console.error("controller->/GET transactions/monthly->error", message);

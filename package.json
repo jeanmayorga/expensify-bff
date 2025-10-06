@@ -15,7 +15,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node -r module-alias/register dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "TZ=UTC nodemon src/index.ts",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
     "postbuild": "echo 'Build completed successfully'",
