@@ -19,11 +19,10 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     }
 
     const timeZone = "America/Guayaquil";
-    const startDateFromZonedTime = fromZonedTime(
-      startOfDay(dateString),
-      timeZone
-    );
-    const endDateFromZonedTime = fromZonedTime(endOfDay(dateString), timeZone);
+    const startDate = startOfDay(dateString);
+    const endDate = endOfDay(dateString);
+    const startDateFromZonedTime = fromZonedTime(startDate, timeZone);
+    const endDateFromZonedTime = fromZonedTime(endDate, timeZone);
 
     console.log("controller->/GET transactions/", {
       type,

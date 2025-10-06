@@ -57,6 +57,8 @@ export class TransactionsService {
       totalExpenses,
       totalIncomes,
       totalAmount,
+      startDate: options.startDate,
+      endDate: options.endDate,
     };
   }
 
