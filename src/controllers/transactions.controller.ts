@@ -22,6 +22,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
 
     console.log("controller->/GET transactions/", {
       type,
+      dateString,
       startDateFromZonedTime,
       endDateFromZonedTime,
     });

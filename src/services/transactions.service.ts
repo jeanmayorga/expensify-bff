@@ -19,10 +19,10 @@ export class TransactionsService {
       .order("created_at", { ascending: false });
 
     if (options.type) {
-      if (options.type === "income") {
+      if (options.type === "incomes") {
         query.eq("type", "income");
       }
-      if (options.type === "expense") {
+      if (options.type === "expenses") {
         query.eq("type", "expense");
       }
     }
