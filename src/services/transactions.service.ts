@@ -38,28 +38,25 @@ export class TransactionsService {
     }
 
     const transactions = data || [];
-    let totalExpenses = 0;
-    let totalIncomes = 0;
-    let totalAmount = 0;
 
-    for (const transaction of transactions) {
-      if (transaction.type === "expense") {
-        totalExpenses += transaction.amount || 0;
-        totalAmount -= transaction.amount || 0;
+    const totalAmount = transactions.reduce((prev, transaction) => {
+      const amount = transaction.amount || 0;
+
+      if (options.type === "all") {
+        if (transaction.type === "expenses") {
+          return prev + amount;
+        }
+        if (transaction.type === "incomes") {
+          return prev - amount;
+        }
       }
-      if (transaction.type === "income") {
-        totalIncomes += transaction.amount || 0;
-        totalAmount += transaction.amount || 0;
-      }
-    }
+
+      return prev + amount;
+    }, 0);
 
     return {
       data: transactions,
-      totalExpenses,
-      totalIncomes,
       totalAmount,
-      startDate: options.startDate,
-      endDate: options.endDate,
     };
   }
 
