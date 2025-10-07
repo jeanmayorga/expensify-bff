@@ -67,8 +67,9 @@ export class OpenAIService {
             "Bank instructions: " +
             "Banco del Pacifico is the *bank name* of the following names: Banco del Pacífico, PacifiCard, Pacifico, infopacificard" +
             "Banco Pichincha is the *bank name* of the following names: Pichincha" +
-            "Banco de Guayaquil is the *bank name* of the following names: Banco Guayaquil, Guayaquil, infoguayaquil" +
-            "Produbanco is the *bank name* of the following names: Produbanco",
+            "Banco de Guayaquil is the *bank name* of the following names: Banco Guayaquil, Guayaquil, infoguayaquil. " +
+            "Produbanco is the *bank name* of the following names: Produbanco. " +
+            "If the bank is Produbanco, the *description* needs to get from the patterns like: Establecimiento: <description>",
         },
         { role: "user", content: message },
       ],
