@@ -1,6 +1,9 @@
 import { Request, Response, Router } from "express";
 import { TransactionsService } from "../services/transactions.service";
-import { TransactionInsert } from "@/models/transactions.model";
+import {
+  TransactionInsert,
+  TransactionUpdate,
+} from "@/models/transactions.model";
 import { getErrorMessage } from "@/utils/handle-error";
 import { fromZonedTime } from "date-fns-tz";
 import { endOfDay, endOfMonth, startOfDay, startOfMonth } from "date-fns";
@@ -71,19 +74,6 @@ router.get("/summary", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-router.get("/:id", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const id = Number(req.params.id);
-    const transaction = await TransactionsService.getById(id);
-
-    res.json({ data: transaction });
-  } catch (error) {
-    const message = getErrorMessage(error);
-    console.error("controller -> transaction GET/:id", message);
-    res.status(500).json({ data: null, error: message });
-  }
-});
-
 router.post("/", async (req: Request, res: Response): Promise<void> => {
   try {
     const newTransaction = req.body as TransactionInsert;
@@ -92,6 +82,18 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error("controller -> transaction POST/", error);
     res.status(500).json({ error: "Failed to create transaction" });
+  }
+});
+
+router.patch("/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = Number(req.params.id);
+    const newTransaction = req.body as TransactionUpdate;
+    const transaction = await TransactionsService.update(id, newTransaction);
+    res.json({ data: transaction });
+  } catch (error) {
+    console.error("controller -> transaction PATCH/", error);
+    res.status(500).json({ error: "Failed to update transaction" });
   }
 });
 

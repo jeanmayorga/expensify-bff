@@ -1,5 +1,9 @@
 import { supabase } from "./supabase.service";
-import { Transaction, TransactionInsert } from "../models/transactions.model";
+import {
+  Transaction,
+  TransactionInsert,
+  TransactionUpdate,
+} from "../models/transactions.model";
 import { eachDayOfInterval, format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 
@@ -113,22 +117,6 @@ export class TransactionsService {
     };
   }
 
-  static async getById(id: number): Promise<Transaction | null> {
-    console.log("TransactionsService->getById()", id);
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("TransactionsService->getById()->error", error.message);
-      throw error;
-    }
-
-    return data;
-  }
-
   static async getByMessageId(messageId: string): Promise<Transaction | null> {
     console.log("TransactionsService->getByMessageId()", messageId);
     const { data, error } = await supabase
@@ -155,10 +143,30 @@ export class TransactionsService {
       .from("transactions")
       .insert(dto)
       .select("*")
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("TransactionsService->create()->error", error.message);
+      throw error;
+    }
+
+    return data;
+  }
+
+  static async update(
+    id: number,
+    dto: TransactionUpdate
+  ): Promise<Transaction | null> {
+    console.log("TransactionsService->update()->", dto.income_message_id);
+    const { data, error } = await supabase
+      .from("transactions")
+      .update(dto)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      console.error("TransactionsService->update()->error", error.message);
       throw error;
     }
 
