@@ -119,7 +119,7 @@ export class TransactionsService {
       .from("transactions")
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("TransactionsService->getById()->error", error.message);
