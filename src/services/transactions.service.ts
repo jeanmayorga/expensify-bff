@@ -19,11 +19,11 @@ export class TransactionsService {
       .order("created_at", { ascending: false });
 
     if (options.type) {
-      if (options.type === "incomes") {
-        query.eq("type", "income");
-      }
       if (options.type === "expenses") {
         query.eq("type", "expense");
+      }
+      if (options.type === "incomes") {
+        query.eq("type", "income");
       }
     }
 
@@ -41,16 +41,6 @@ export class TransactionsService {
 
     const totalAmount = transactions.reduce((prev, transaction) => {
       const amount = transaction.amount || 0;
-
-      if (options.type === "all") {
-        if (transaction.type === "expenses") {
-          return prev + amount;
-        }
-        if (transaction.type === "incomes") {
-          return prev - amount;
-        }
-      }
-
       return prev + amount;
     }, 0);
 

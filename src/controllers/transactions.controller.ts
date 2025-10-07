@@ -30,7 +30,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     const data = await TransactionsService.getTxsBetweenDates({
       startDate: startDateFromZonedTime,
       endDate: endDateFromZonedTime,
-      type: type || "all",
+      type: type || "expenses",
     });
 
     res.json(data);
