@@ -130,6 +130,7 @@ router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
         "notificaciones@infopacificard.com.ec",
         "bancavirtual@bancoguayaquil.com",
         "banco@pichincha.com",
+        "servicios@tarjetasbancopichincha.com",
       ];
       if (!whitelist.includes(message.from)) {
         console.log("🤖 email not in whitelist ->", message.from);
