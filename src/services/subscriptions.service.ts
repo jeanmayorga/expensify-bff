@@ -111,6 +111,26 @@ export class SubscriptionsService {
     }
   }
 
+  async forceRenewSubscription(subscriptionId: string): Promise<void> {
+    try {
+      console.log("SubscriptionsService->forceRenewSubscription()");
+      const newExp = new Date(
+        Date.now() + constants.SUBSCRIPTION_EXPIRATION_TIME * 60 * 1000
+      ).toISOString();
+      const response = await this.subscriptionsApi.patch(`/${subscriptionId}`, {
+        expirationDateTime: newExp,
+      });
+      console.log("🔄 subscription renewed until:", newExp, response.data);
+      console.log("forceRenewSubscription ->", response.data);
+    } catch (error: any) {
+      const message = getErrorMessage(error);
+      console.error(
+        "SubscriptionsService->forceRenewSubscription()->",
+        message
+      );
+    }
+  }
+
   async renewSubscription(): Promise<void> {
     try {
       console.log("SubscriptionsService->renewSubscription()");

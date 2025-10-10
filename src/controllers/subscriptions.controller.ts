@@ -82,6 +82,30 @@ router.delete(
   }
 );
 
+router.patch(
+  "/:id",
+  outlookMiddleware,
+  async (req: OutlookRequest, res: Response): Promise<void> => {
+    try {
+      console.log("controller->/PATCH subscriptions");
+      const token = req.accessToken || "";
+      if (!token) throw new Error("No token available.");
+
+      const subscriptionService = new SubscriptionsService(token);
+      await subscriptionService.forceRenewSubscription(req.params.id as string);
+
+      res.json({ data: true });
+    } catch (error: any) {
+      handleError({
+        error,
+        res,
+        controller: "subscriptions",
+        message: "Failed to force renew subscription",
+      });
+    }
+  }
+);
+
 router.post("/webhook", async (req: Request, res: Response): Promise<void> => {
   console.log("controller->/POST outlook/webhook");
 
