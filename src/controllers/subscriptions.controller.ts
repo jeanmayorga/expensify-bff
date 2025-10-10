@@ -22,9 +22,9 @@ router.post(
       const token = req.accessToken || "";
 
       const subscriptionService = new SubscriptionsService(token);
-      const subscription = await subscriptionService.createSubscription();
+      const data = await subscriptionService.createSubscription();
 
-      res.json({ subscription });
+      res.json({ data });
     } catch (error: any) {
       handleError({
         error,
@@ -69,7 +69,8 @@ router.delete(
 
       const subscriptionService = new SubscriptionsService(token);
       await subscriptionService.deleteSubscription(req.params.id as string);
-      res.sendStatus(200);
+
+      res.json({ data: true });
     } catch (error: any) {
       handleError({
         error,
