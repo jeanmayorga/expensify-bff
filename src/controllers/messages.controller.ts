@@ -32,12 +32,12 @@ router.get(
 );
 
 router.post(
-  "/process/:id",
+  "/process",
   outlookMiddleware,
   async (req: OutlookRequest, res: Response): Promise<void> => {
     try {
       console.log("controller->/POST messages/process/:id");
-      const id = req.params.id as string;
+      const id = req.body.id as string;
       const accessToken = req.accessToken || "";
       const messageService = new MessagesService(accessToken);
       const message = await messageService.getMessageById(id);

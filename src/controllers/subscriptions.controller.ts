@@ -45,8 +45,8 @@ router.get(
       const token = req.accessToken || "";
 
       const subscriptionService = new SubscriptionsService(token);
-      const subscriptions = await subscriptionService.getSubscriptions();
-      res.json({ subscriptions });
+      const data = await subscriptionService.getSubscriptions();
+      res.json({ data });
     } catch (error: any) {
       handleError({
         error,
