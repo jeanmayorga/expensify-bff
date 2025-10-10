@@ -25,8 +25,8 @@ export class SubscriptionsService {
     try {
       console.log("SubscriptionsService->getSubscriptions()");
       const response = await this.subscriptionsApi.get("/");
-      const mappedSubscriptions = response.data.value.map(
-        (subscription: Subscription) => {
+      const mappedSubscriptions = response.data.value
+        .map((subscription: Subscription) => {
           const expirationDateTime = new Date(subscription.expirationDateTime);
           const expirationDateTimeEcuador = format(
             getEcuadorDate(expirationDateTime),
@@ -36,8 +36,12 @@ export class SubscriptionsService {
             ...subscription,
             expirationDateTimeEcuador,
           };
-        }
-      );
+        })
+        .sort(
+          (a: Subscription, b: Subscription) =>
+            new Date(b.expirationDateTime).getTime() -
+            new Date(a.expirationDateTime).getTime()
+        );
       return mappedSubscriptions;
     } catch (error: any) {
       const message = getErrorMessage(error);
